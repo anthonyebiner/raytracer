@@ -8,7 +8,7 @@ using fmt::print;
 int main() {
   printf("Starting program\n");
 
-  PathTracer pathtracer = PathTracer({10, 1, 50, 0.005f, 7, 4});
+  PathTracer pathtracer = PathTracer({256, 1, 50, 0.005f, 7, 4});
 
   std::vector<Primitive *> primitives;
   Generator::room(&primitives, 200, 150, 200,
@@ -36,6 +36,6 @@ int main() {
 
   pathtracer.set_camera({0, 75, -400}, {0, 75, 0}, {0, 1, 0}, 36.75, 49, 0, INF_F, 0, 0);
 
-  pathtracer.raytrace();
+  pathtracer.raytrace_cuda();
   pathtracer.save_to_file("test1.bmp");
 }

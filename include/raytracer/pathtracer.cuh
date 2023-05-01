@@ -271,8 +271,8 @@ public:
     auto start = std::chrono::steady_clock::now();
     raytrace_cpu(&scene, &parameters, sample_buffer.get());
     auto end = std::chrono::steady_clock::now();
-    print("Pixels Raytraced. Elapsed time = {} ms\n",
-          std::chrono::duration_cast<std::chrono::microseconds>(end - start).count());
+    print("\nPixels Raytraced. Elapsed time = {} ms\n",
+          std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
   }
 
   void raytrace_cuda() {

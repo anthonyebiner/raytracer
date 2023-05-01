@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <memory>
-#include <curand_kernel.h>
 #include <condition_variable>
 #include "raytracer/scene/camera.cuh"
 #include "raytracer/util/image.cuh"
@@ -158,33 +157,6 @@ void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
   }
 }
 
-__global__ void raytrace_kernel(Scene *scene, Parameters *parameters,
-                                SampleBuffer *buffer, volatile int *progress) {
-  uint x = threadIdx.x + blockIdx.x * blockDim.x;
-  uint y = threadIdx.y + blockIdx.y * blockDim.y;
-
-  if ((x >= buffer->w) || (y >= buffer->h)) {
-#if USE_PROGRESS
-    if (!(threadIdx.x || threadIdx.y)) {
-      atomicAdd((int *) progress, 1);
-      __threadfence_system();
-    }
-#endif
-    return;
-  }
-
-  uint seed = y * buffer->w + x;
-  Sampler3D::sample_grid(&seed);
-  fill_color(x, y, scene, parameters, buffer, &seed);
-
-#if USE_PROGRESS
-  if (!(threadIdx.x || threadIdx.y)) {
-    atomicAdd((int *) progress, 1);
-    __threadfence_system();
-  }
-#endif
-}
-
 
 class PathTracer {
 public:
@@ -273,108 +245,5 @@ public:
     auto end = std::chrono::steady_clock::now();
     print("\nPixels Raytraced. Elapsed time = {} ms\n",
           std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
-  }
-
-  void raytrace_cuda() {
-    if (!camera) {
-      print("CAMERA NOT SET!");
-      return;
-    }
-    if (primitives.empty()) {
-      print("SCENE NOT SET!");
-      return;
-    }
-    if (lights.empty()) {
-      print("LIGHTS NOT SET!");
-      return;
-    }
-    if (sample_buffer->w == 0 || sample_buffer->h == 0) {
-      print("SAMPLE BUFFER EMPTY");
-      return;
-    }
-    print("Starting raytracing...\n");
-
-    if (d_bvh_opt == nullptr) {
-      print("Creating BVH\n");
-      BVHAccel bvh = BVHAccel(primitives, parameters.bvh_node_size);
-      print("Created BVH. Depth: {}\n", bvh.get_max_depth());
-
-      BVHAccelOpt bvh_opt = bvh.to_optimized_bvh();
-      print("Optimized BVH\n");
-
-      d_bvh_opt = bvh_opt.to_cuda();
-      print("Moved BVH to CUDA\n");
-    }
-
-    uint num_lights = lights.size();
-    SceneLight *d_lights;
-    cudaMalloc(&d_lights, sizeof(SceneLight) * num_lights);
-    cudaMemcpy(d_lights, &lights[0], sizeof(SceneLight) * lights.size(), cudaMemcpyHostToDevice);
-    print("Moved lights to CUDA\n");
-
-    SampleBuffer *d_buf = sample_buffer->to_cuda();
-    print("Moved sample buffer to CUDA\n");
-
-    Camera *d_camera = camera->to_cuda();
-    print("Moved camera to CUDA\n");
-
-    Scene *d_scene;
-    Scene scene = {d_bvh_opt, d_lights, num_lights, d_camera};
-    cudaMalloc(&d_scene, sizeof(Scene));
-    cudaMemcpy(d_scene, &scene, sizeof(Scene), cudaMemcpyHostToDevice);
-    print("Moved scene to CUDA\n");
-
-    Parameters *d_parameters;
-    cudaMalloc(&d_parameters, sizeof(Parameters));
-    cudaMemcpy(d_parameters, &parameters, sizeof(Parameters), cudaMemcpyHostToDevice);
-    print("Moved parameters to CUDA\n");
-
-    dim3 blocks(sample_buffer->w / 16 + 1, sample_buffer->h / 16 + 1);
-    dim3 threads(16, 16);
-
-    volatile int *d_progress, *h_progress;
-    cudaSetDeviceFlags(cudaDeviceMapHost);
-    cudaCheckErrors("cudaSetDeviceFlags error");
-    cudaHostAlloc((void **) &h_progress, sizeof(int), cudaHostAllocMapped);
-    cudaCheckErrors("cudaHostAlloc error");
-    cudaHostGetDevicePointer((int **) &d_progress, (int *) h_progress, 0);
-    cudaCheckErrors("cudaHostGetDevicePointer error");
-    *h_progress = 0;
-
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
-    print("Raytracing Pixels\n");
-    cudaEventRecord(start);
-    raytrace_kernel<<<blocks, threads>>>(d_scene, d_parameters, d_buf, d_progress);
-    cudaEventRecord(stop);
-#if USE_PROGRESS
-    uint num_blocks = blocks.x * blocks.y;
-    float percentage;
-    do {
-      percentage = (float) *h_progress / (float) num_blocks;
-      print_progress(percentage);
-    } while (percentage < 0.98f);
-    print_progress(1.0);
-    printf("\n");
-#endif
-    cudaEventSynchronize(stop);
-    cudaCheckErrors("cudaEventSynchronize error");
-    float et;
-    cudaEventElapsedTime(&et, start, stop);
-    cudaCheckErrors("cudaEventElapsedTime error");
-    cudaDeviceSynchronize();
-    cudaCheckErrors("raytrace_kernel error");
-
-    print("Pixels Raytraced. Elapsed time = {} ms\n", et);
-
-    sample_buffer->from_cuda(d_buf);
-    print("Sample buffer loaded from CUDA\n");
-
-    cudaFree(d_buf);
-    cudaFree(d_camera);
-    cudaFree(d_scene);
-    cudaFree(d_parameters);
   }
 };

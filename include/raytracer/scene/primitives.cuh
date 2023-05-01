@@ -28,9 +28,9 @@ struct Primitive {
     } triangle;
   };
 
-  __host__ explicit Primitive() : type(INVALID), bsdf(nullptr) {}
+  explicit Primitive() : type(INVALID), bsdf(nullptr) {}
 
-  __host__ Primitive(Primitive const &p) {
+  Primitive(Primitive const &p) {
     type = p.type;
     bsdf = p.bsdf;
     switch (type) {
@@ -61,7 +61,7 @@ struct Primitive {
     return *this;
   }
 
-  __device__ __host__ bool intersect(Ray *ray, Intersection *isect) {
+  RAYTRACER_HOST_DEVICE_FUNC bool intersect(Ray *ray, Intersection *isect) {
     switch (type) {
       case SPHERE: {
         Vector3f a = sphere.origin - ray->origin;
@@ -118,7 +118,7 @@ struct Primitive {
     }
   }
 
-  __host__ BBox get_bbox() {
+  BBox get_bbox() {
     switch (type) {
       case SPHERE: {
         return {sphere.origin - Vector3f(sphere.r, sphere.r, sphere.r),
@@ -138,7 +138,7 @@ struct Primitive {
 
 class PrimitiveFactory {
 public:
-  __host__ static Primitive createSphere(const Vector3f &center, float radius, BSDF *bsdf) {
+  static Primitive createSphere(const Vector3f &center, float radius, BSDF *bsdf) {
     auto primitive = Primitive();
     primitive.type = Primitive::SPHERE;
     primitive.bsdf = bsdf;
@@ -146,7 +146,7 @@ public:
     return primitive;
   }
 
-  __host__ static Primitive
+  static Primitive
   createTriangle(const Vector3f &p1, const Vector3f &p2, const Vector3f &p3, const Vector3f &n1, const Vector3f &n2,
                  const Vector3f &n3, BSDF *bsdf) {
     auto primitive = Primitive();

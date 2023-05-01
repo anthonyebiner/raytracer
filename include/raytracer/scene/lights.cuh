@@ -34,9 +34,9 @@ public:
     } directional;
   };
 
-  __device__ __host__ explicit SceneLight() : type(INVALID) {}
+  RAYTRACER_HOST_DEVICE_FUNC explicit SceneLight() : type(INVALID) {}
 
-  __device__ __host__ SceneLight(SceneLight const &l) {
+  RAYTRACER_HOST_DEVICE_FUNC SceneLight(SceneLight const &l) {
     type = l.type;
     switch (type) {
       case AREA: {
@@ -71,8 +71,8 @@ public:
     return *this;
   }
 
-  __device__ __host__ Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
-                                     float *dist_to_light, float *pdf, uint *seed) {
+  RAYTRACER_HOST_DEVICE_FUNC Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
+                                            float *dist_to_light, float *pdf, uint *seed) {
     switch (type) {
       case AREA: {
         Vector2f sample = Sampler2D::sample_grid(seed) - Vector2f(0.5f, 0.5f);
@@ -103,7 +103,7 @@ public:
     }
   }
 
-  __device__ __host__ bool is_delta_light() const {
+  RAYTRACER_HOST_DEVICE_FUNC bool is_delta_light() const {
     switch (type) {
       case AREA: {
         return false;
@@ -122,22 +122,22 @@ public:
 
 class SceneLightFactory {
 public:
-  __host__ static SceneLight create_area(const Array3f &radiance, const Vector3f &position, const Vector3f &direction,
-                                         const Vector3f &dim_x, const Vector3f &dim_y) {
+  static SceneLight create_area(const Array3f &radiance, const Vector3f &position, const Vector3f &direction,
+                                const Vector3f &dim_x, const Vector3f &dim_y) {
     auto light = SceneLight();
     light.type = SceneLight::AREA;
     light.area = {radiance, position, direction.normalized(), dim_x, dim_y, dim_x.norm() * dim_y.norm()};
     return light;
   }
 
-  __host__ static SceneLight create_point(const Array3f &radiance, const Vector3f &position) {
+  static SceneLight create_point(const Array3f &radiance, const Vector3f &position) {
     auto light = SceneLight();
     light.type = SceneLight::POINT;
     light.point = {radiance, position};
     return light;
   }
 
-  __host__ static SceneLight create_directional(const Array3f &radiance, const Vector3f &direction) {
+  static SceneLight create_directional(const Array3f &radiance, const Vector3f &direction) {
     auto light = SceneLight();
     light.type = SceneLight::DIRECTIONAL;
     light.directional = {radiance, (-direction).normalized()};

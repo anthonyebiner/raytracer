@@ -45,7 +45,7 @@ struct Scene {
 };
 
 
-__device__ __host__ Array3d
+RAYTRACER_HOST_DEVICE_FUNC Array3d
 estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isect, uint *seed) {
   if (isect.primitive->bsdf->is_delta()) return {0, 0, 0};
   Vector3f to_light;
@@ -68,7 +68,7 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isec
 }
 
 
-__device__ __host__ Array3d
+RAYTRACER_HOST_DEVICE_FUNC Array3d
 estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *seed) {
   Array3d color_mask = {1, 1, 1};
   Array3d total_color = {0, 0, 0};
@@ -109,7 +109,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
 }
 
 
-__device__ __host__ Array3d
+RAYTRACER_HOST_DEVICE_FUNC Array3d
 fill_color(uint x, uint y, Scene *scene, Parameters *parameters, SampleBuffer *buffer, uint *seed) {
   Vector2f origin = Vector2f(x, y);
   Array3d color = {0, 0, 0};
@@ -145,7 +145,7 @@ fill_color(uint x, uint y, Scene *scene, Parameters *parameters, SampleBuffer *b
   buffer->update_pixel(color, x, y);
 }
 
-__host__ void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
+void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
   for (uint y = 0; y < buffer->h; y++) {
     for (uint x = 0; x < buffer->w; x++) {
       uint seed = y * buffer->w + x;

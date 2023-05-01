@@ -7,7 +7,7 @@ using Eigen::Array3f;
 using Eigen::Vector3f;
 using Eigen::Matrix3f;
 
-__device__ __host__ void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
+RAYTRACER_HOST_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
   Vector3f z = {n.x(), n.y(), n.z()};
   Vector3f h = z;
   if (fabs(h.x()) <= fabs(h.y()) && fabs(h.x()) <= fabs(h.z()))
@@ -71,9 +71,9 @@ public:
     } phong;
   };
 
-  __host__ explicit BSDF() : type(INVALID) {}
+  explicit BSDF() : type(INVALID) {}
 
-  __host__ BSDF(BSDF const &b) {
+  BSDF(BSDF const &b) {
     type = b.type;
     switch (type) {
       case DIFFUSE: {
@@ -132,7 +132,7 @@ public:
     return *this;
   }
 
-  __device__ __host__ bool is_delta() const {
+  RAYTRACER_HOST_DEVICE_FUNC bool is_delta() const {
     switch (type) {
       case REFLECTION: {
         return true;
@@ -149,7 +149,7 @@ public:
     }
   }
 
-  __device__ __host__ Vector3f get_emission() const {
+  RAYTRACER_HOST_DEVICE_FUNC Vector3f get_emission() const {
     switch (type) {
       case EMISSION: {
         return emission.radiance;
@@ -160,7 +160,7 @@ public:
     }
   }
 
-  __device__ __host__ Array3f f(const Vector3f &o_out, const Vector3f &o_in) {
+  RAYTRACER_HOST_DEVICE_FUNC Array3f f(const Vector3f &o_out, const Vector3f &o_in) {
     switch (type) {
       case DIFFUSE: {
         return diffuse.reflectance / PI;
@@ -183,7 +183,7 @@ public:
     }
   }
 
-  __device__ __host__ Vector3f
+  RAYTRACER_HOST_DEVICE_FUNC Vector3f
   sample(const Vector3f &o_out, Array3f *mask, float *pdf, uint *seed) {
     float cos_o_out = o_out.z();
     Vector3f o_in;
@@ -285,31 +285,31 @@ public:
     }
   }
 
-  static __device__ __host__ float cos_theta(const Vector3f &w) {
+  static RAYTRACER_HOST_DEVICE_FUNC float cos_theta(const Vector3f &w) {
     return w.z();
   }
 
-  static __device__ __host__ float acos_theta(const Vector3f &w) {
+  static RAYTRACER_HOST_DEVICE_FUNC float acos_theta(const Vector3f &w) {
     return acosf(min(max(w.z(), -1.0f + 1e-5f), 1.0f - 1e-5f));
   }
 
-  static __device__ __host__ float lambda(const Vector3f &w, float alpha) {
+  static RAYTRACER_HOST_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {
     float theta = acos_theta(w);
     float a = 1.0f / (alpha * tanf(theta));
     return 0.5f * (erff(a) - 1.0f + expf(-a * a) / (a * PI));
   }
 
-  static __device__ __host__ double shadow_masking(const Vector3f &o_out, const Vector3f &wi, float alpha) {
+  static RAYTRACER_HOST_DEVICE_FUNC double shadow_masking(const Vector3f &o_out, const Vector3f &wi, float alpha) {
     return 1.0 / (1.0 + lambda(wi, alpha) + lambda(o_out, alpha));
   }
 
-  static __device__ __host__ double ndf(const Vector3f &h, float alpha) {
+  static RAYTRACER_HOST_DEVICE_FUNC double ndf(const Vector3f &h, float alpha) {
     double t = acos_theta(h);
     double a2 = alpha * alpha;
     return exp(-(pow(tan(t), 2) / a2)) / (PI * a2 * pow(cos(t), 4));
   }
 
-  static __device__ __host__ Array3f fresnel(const Vector3f &o_in, const Array3f &eta, const Array3f &k) {
+  static RAYTRACER_HOST_DEVICE_FUNC Array3f fresnel(const Vector3f &o_in, const Array3f &eta, const Array3f &k) {
     float t = acos_theta(o_in);
     Array3f a = eta * eta + k * k;
     Array3f b = 2 * eta * cos(t);
@@ -319,12 +319,12 @@ public:
     return (rs + rp) / 2;
   }
 
-  static __device__ __host__ void reflect(const Vector3f &wo, Vector3f *wi) {
+  static RAYTRACER_HOST_DEVICE_FUNC void reflect(const Vector3f &wo, Vector3f *wi) {
     Vector3f out = {-wo.x(), -wo.y(), wo.z()};
     *wi = out;
   }
 
-  static __device__ __host__ bool refract(const Vector3f &wo, Vector3f *wi, float ior) {
+  static RAYTRACER_HOST_DEVICE_FUNC bool refract(const Vector3f &wo, Vector3f *wi, float ior) {
     float n = wo.z() > 0 ? 1 / ior : ior;
     float n2 = powf(n, 2);
     float z2 = powf(wo.z(), 2);
@@ -345,50 +345,50 @@ public:
 
 class BSDFFactory {
 public:
-  __host__ static BSDF createDiffuse(const Array3f &reflectance) {
+  static BSDF createDiffuse(const Array3f &reflectance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::DIFFUSE;
     bsdf.diffuse = {reflectance};
     return bsdf;
   }
 
-  __host__ static BSDF createEmission(const Array3f &radiance) {
+  static BSDF createEmission(const Array3f &radiance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::EMISSION;
     bsdf.emission = {radiance};
     return bsdf;
   }
 
-  __host__ static BSDF createReflection(float roughness, const Array3f &reflectance) {
+  static BSDF createReflection(float roughness, const Array3f &reflectance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::REFLECTION;
     bsdf.reflection = {roughness, reflectance};
     return bsdf;
   }
 
-  __host__ static BSDF createRefraction(float ior, float roughness, const Array3f &transmittance) {
+  static BSDF createRefraction(float ior, float roughness, const Array3f &transmittance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::REFRACTION;
     bsdf.refraction = {ior, roughness, transmittance};
     return bsdf;
   }
 
-  __host__ static BSDF createGlass(float ior, float roughness,
-                                   const Array3f &reflectance, const Array3f &transmittance) {
+  static BSDF createGlass(float ior, float roughness,
+                          const Array3f &reflectance, const Array3f &transmittance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::GLASS;
     bsdf.glass = {ior, roughness, reflectance, transmittance};
     return bsdf;
   }
 
-  __host__ static BSDF createMicrofacet(float alpha, const Array3f &eta, const Array3f &k) {
+  static BSDF createMicrofacet(float alpha, const Array3f &eta, const Array3f &k) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::MICROFACET;
     bsdf.microfacet = {alpha, eta, k};
     return bsdf;
   }
 
-  __host__ static BSDF createPhong(float shininess, const Array3f &diffuse, const Array3f &specular) {
+  static BSDF createPhong(float shininess, const Array3f &diffuse, const Array3f &specular) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::PHONG;
     bsdf.phong = {shininess, diffuse, specular};

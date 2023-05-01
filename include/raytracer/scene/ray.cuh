@@ -17,13 +17,13 @@ struct Ray {
   float min_t;
   float max_t;
 
-  __device__ __host__ Ray() {};
+  RAYTRACER_HOST_DEVICE_FUNC Ray() {};
 
-  __device__ __host__ Ray(const Vector3f &origin, const Vector3f &direction)
+  RAYTRACER_HOST_DEVICE_FUNC Ray(const Vector3f &origin, const Vector3f &direction)
       : origin(origin), direction(direction.normalized()), min_t(EPS_F), max_t(INF_F),
         inv_d(direction.cwiseInverse()) {}
 
-  __device__ __host__ Ray(const Vector3f &origin, const Vector3f &direction, float max_t)
+  RAYTRACER_HOST_DEVICE_FUNC Ray(const Vector3f &origin, const Vector3f &direction, float max_t)
       : origin(origin), direction(direction.normalized()), min_t(EPS_F), max_t(max_t),
         inv_d(direction.cwiseInverse()) {}
 };
@@ -43,7 +43,7 @@ struct Intersection {
   Vector3f hit_point;
   Vector3f o_out;
 
-  __device__ __host__ void compute() {
+  RAYTRACER_HOST_DEVICE_FUNC void compute() {
     normal = normal.normalized();
     make_coord_space(o2w, normal);
     w2o = o2w.transpose();

@@ -1,5 +1,15 @@
 #pragma once
 
+
+#if defined(__CUDACC__)
+#define RAYTRACER_HOST_DEVICE_FUNC __host__ __device__
+#define RAYTRACER_HOST_FUNC __host__
+#else
+#define RAYTRACER_HOST_DEVICE_FUNC
+#define RAYTRACER_HOST_FUNC
+#endif
+
+
 #define PI (3.14159265358979323f)
 #define EPS_F (0.00001f)
 #define INF_F INFINITY
@@ -23,17 +33,17 @@
 
 
 template<typename T>
-__device__ __host__ inline T radians(T deg) {
+RAYTRACER_HOST_DEVICE_FUNC inline T radians(T deg) {
   return deg * (PI / 180);
 }
 
 template<typename T>
-__device__ __host__ inline T degrees(T rad) {
+RAYTRACER_HOST_DEVICE_FUNC inline T degrees(T rad) {
   return rad * (180 / PI);
 }
 
 template<typename T>
-__device__ __host__ inline T clamp(T x, T lo, T hi) {
+RAYTRACER_HOST_DEVICE_FUNC inline T clamp(T x, T lo, T hi) {
   return std::min(std::max(x, lo), hi);
 }
 

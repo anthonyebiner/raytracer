@@ -24,7 +24,7 @@ struct BVHNodeOpt {
     } leaf;
   };
 
-  __device__ __host__ inline bool is_leaf() const {
+  RAYTRACER_HOST_DEVICE_FUNC inline bool is_leaf() const {
     return leaf.count & 0x80000000;
   }
 };
@@ -46,7 +46,7 @@ struct BVHAccelOpt {
     delete[] nodes;
   }
 
-  __device__ __host__ bool intersect(Ray *ray, Intersection *isect) const {
+  RAYTRACER_HOST_DEVICE_FUNC bool intersect(Ray *ray, Intersection *isect) const {
     uint stack[MAX_BVH_STACK];
     uint stackIdx = 0;
     stack[stackIdx++] = 0;
@@ -82,7 +82,7 @@ struct BVHAccelOpt {
     return hit;
   }
 
-  __host__ BVHAccelOpt *to_cuda() const {
+  BVHAccelOpt *to_cuda() const {
     BVHAccelOpt *bvh;
 
     cudaMalloc(&bvh, sizeof(BVHAccelOpt));

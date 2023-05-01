@@ -14,22 +14,22 @@ public:
   Vector3f minp;
   Vector3f extent;
 
-  __host__ BBox() {
+  BBox() {
     maxp = {-INF_F, -INF_F, -INF_F};
     minp = {INF_F, INF_F, INF_F};
     extent = maxp - minp;
   }
 
-  __host__ explicit BBox(const Vector3f &p) : minp(p), maxp(p) {
+  explicit BBox(const Vector3f &p) : minp(p), maxp(p) {
     extent = maxp - minp;
   }
 
-  __host__ BBox(const Vector3f &minp, const Vector3f &maxp) :
+  BBox(const Vector3f &minp, const Vector3f &maxp) :
       minp(minp), maxp(maxp) {
     extent = maxp - minp;
   }
 
-  __host__ void expand(const BBox &bbox) {
+  void expand(const BBox &bbox) {
     minp.x() = min(minp.x(), bbox.minp.x());
     minp.y() = min(minp.y(), bbox.minp.y());
     minp.z() = min(minp.z(), bbox.minp.z());
@@ -39,7 +39,7 @@ public:
     extent = maxp - minp;
   }
 
-  __host__ void expand(const Vector3f &p) {
+  void expand(const Vector3f &p) {
     minp.x() = min(minp.x(), p.x());
     minp.y() = min(minp.y(), p.y());
     minp.z() = min(minp.z(), p.z());
@@ -49,26 +49,26 @@ public:
     extent = maxp - minp;
   }
 
-  __host__ Vector3f centroid() const {
+  Vector3f centroid() const {
     return (minp + maxp) / 2.0f;
   }
 
-  __host__ float surface_area() const {
+  float surface_area() const {
     if (empty()) return 0.0;
     return 2 * (extent.x() * extent.z() +
                 extent.x() * extent.y() +
                 extent.y() * extent.z());
   }
 
-  __host__ bool empty() const {
+  bool empty() const {
     return minp.x() > maxp.x() || minp.y() > maxp.y() || minp.z() > maxp.z();
   }
 
-  __host__ bool intersect(const Ray &ray) const {
+  bool intersect(const Ray &ray) const {
     return intersect(minp, maxp, ray);
   }
 
-  __device__ __host__ static bool intersect(Vector3f minp, Vector3f maxp, const Ray &ray) {
+  RAYTRACER_HOST_DEVICE_FUNC static bool intersect(Vector3f minp, Vector3f maxp, const Ray &ray) {
     float tmin = 0.0, tmax = ray.max_t;
 
     for (int d = 0; d < 3; ++d) {

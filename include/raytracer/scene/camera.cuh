@@ -18,8 +18,8 @@ public:
   float aperture;
   float focal_distance;
 
-  __host__ Camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,
-                  float vFov, float hFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
+  Camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,
+         float vFov, float hFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
     this->nClip = nClip;
     this->fClip = fClip;
     this->vFov = vFov;
@@ -37,7 +37,7 @@ public:
     c2w.col(2) = dirToCamera.normalized();
   }
 
-  __device__ __host__ Ray generate_ray(float x, float y) const {
+  RAYTRACER_HOST_DEVICE_FUNC Ray generate_ray(float x, float y) const {
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
     Ray world_ray = Ray(origin, (c2w * camera_vector).normalized());
     world_ray.min_t = nClip;
@@ -45,7 +45,7 @@ public:
     return world_ray;
   }
 
-  __device__ __host__ Ray generate_ray_for_thin_lens(float x, float y, float rndR, float rndTheta) const {
+  RAYTRACER_HOST_DEVICE_FUNC Ray generate_ray_for_thin_lens(float x, float y, float rndR, float rndTheta) const {
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
 
     Vector3f p_lens = {aperture * sqrtf(rndR) * cosf(rndTheta), aperture * sqrtf(rndR) * sinf(rndTheta), 0};
@@ -58,7 +58,7 @@ public:
     return focus_ray;
   }
 
-  __host__ Camera *to_cuda() const {
+  Camera *to_cuda() const {
     Camera *cam_d;
 
     cudaMalloc(&cam_d, sizeof(Camera));

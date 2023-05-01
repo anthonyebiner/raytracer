@@ -1,6 +1,11 @@
 #pragma once
 
 #include "rapidobj/rapidobj.hpp"
+#include "raytracer/scene/primitives.cuh"
+#include "raytracer/scene/bsdf.cuh"
+#include "Eigen/Dense"
+
+using Eigen::Vector3f;
 
 
 struct Generator {

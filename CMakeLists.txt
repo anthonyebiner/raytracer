@@ -25,14 +25,6 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmtlib)
 
 
-FetchContent_Declare(
-        fmtlib
-        GIT_PROGRESS TRUE
-        GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-        GIT_TAG 9.1.0)
-FetchContent_MakeAvailable(fmtlib)
-
-
 FetchContent_Declare(rapidobj
         GIT_REPOSITORY https://github.com/guybrush77/rapidobj.git
         GIT_TAG origin/master)
@@ -52,5 +44,4 @@ source_group(
         PREFIX "Header Files"
         FILES ${HEADER_LIST})
 
-
-add_subdirectory(apps)
+#add_subdirectory(apps)

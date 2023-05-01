@@ -45,4 +45,4 @@ source_group(
         PREFIX "Header Files"
         FILES ${HEADER_LIST})
 
-add_subdirectory(apps)
+#add_subdirectory(apps)

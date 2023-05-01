@@ -136,7 +136,8 @@ public:
       node->end = end;
       return node;
     } else {
-      auto axis = int(std::distance(&extent[0], std::max_element(&extent[0], &extent[2])));
+      int axis;
+      extent.maxCoeff(&axis);
 
       Vector3f center = {0, 0, 0};
       for (auto p = start; p != end; p++) {

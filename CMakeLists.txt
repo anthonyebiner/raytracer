@@ -34,6 +34,7 @@ FetchContent_MakeAvailable(rapidobj)
 
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${Raytracer_SOURCE_DIR}/include/raytracer/*.cuh")
 add_library(raytracer INTERFACE)
+add_library(raytracer::raytracer ALIAS raytracer)
 target_sources(raytracer INTERFACE ${headers})
 
 target_include_directories(raytracer INTERFACE "${PROJECT_SOURCE_DIR}/include")

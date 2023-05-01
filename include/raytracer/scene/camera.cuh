@@ -57,13 +57,4 @@ public:
 
     return focus_ray;
   }
-
-  Camera *to_cuda() const {
-    Camera *cam_d;
-
-    cudaMalloc(&cam_d, sizeof(Camera));
-    cudaMemcpy(cam_d, this, sizeof(Camera), cudaMemcpyHostToDevice);
-
-    return cam_d;
-  }
 };

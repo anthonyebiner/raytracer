@@ -81,41 +81,6 @@ struct BVHAccelOpt {
 
     return hit;
   }
-
-  BVHAccelOpt *to_cuda() const {
-    BVHAccelOpt *bvh;
-
-    cudaMalloc(&bvh, sizeof(BVHAccelOpt));
-    cudaMemcpy(bvh, this, sizeof(BVHAccelOpt), cudaMemcpyHostToDevice);
-
-    Primitive *d_primitives;
-    cudaMalloc(&d_primitives, sizeof(Primitive) * num_primitives);
-    cudaMemcpy(d_primitives, primitives, sizeof(Primitive) * num_primitives, cudaMemcpyHostToDevice);
-    cudaMemcpy(&(bvh->primitives), &d_primitives, sizeof(Primitive *), cudaMemcpyHostToDevice);
-
-    std::unordered_map<BSDF *, BSDF *> moved_bsdfs;
-    for (uint i = 0; i < num_primitives; i++) {
-      BSDF *bsdf = primitives[i].bsdf;
-      if (bsdf == nullptr) continue;
-      auto moved_bsdf = moved_bsdfs.find(bsdf);
-      if (moved_bsdf != moved_bsdfs.end()) {
-        cudaMemcpy(&(d_primitives[i].bsdf), &(moved_bsdf->second), sizeof(BSDF *), cudaMemcpyHostToDevice);
-      } else {
-        BSDF *d_bsdf;
-        cudaMalloc(&d_bsdf, sizeof(BSDF));
-        cudaMemcpy(d_bsdf, bsdf, sizeof(BSDF), cudaMemcpyHostToDevice);
-        cudaMemcpy(&(d_primitives[i].bsdf), &d_bsdf, sizeof(BSDF *), cudaMemcpyHostToDevice);
-        moved_bsdfs.insert({{bsdf, d_bsdf}});
-      }
-    }
-
-    BVHNodeOpt *d_nodes;
-    cudaMalloc(&d_nodes, sizeof(BVHNodeOpt) * num_nodes);
-    cudaMemcpy(d_nodes, nodes, sizeof(BVHNodeOpt) * num_nodes, cudaMemcpyHostToDevice);
-    cudaMemcpy(&(bvh->nodes), &d_nodes, sizeof(BVHNodeOpt *), cudaMemcpyHostToDevice);
-
-    return bvh;
-  }
 };
 
 

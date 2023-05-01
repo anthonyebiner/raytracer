@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rapidobj/rapidobj.hpp"
+
 
 struct Generator {
   static bool

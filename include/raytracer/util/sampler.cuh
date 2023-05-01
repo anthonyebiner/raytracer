@@ -1,6 +1,5 @@
 #pragma once
 
-#include "curand_kernel.h"
 #include "raytracer/util/misc.cuh"
 #include <random>
 #include "Eigen/Dense"

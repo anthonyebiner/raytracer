@@ -42,7 +42,7 @@ public:
 
   RAYTRACER_HOST_DEVICE_FUNC static Vector3f sample_sphere(uint *seed) {
     float z = random_float(seed) * 2 - 1;
-    float sinTheta = sqrtf(max(0.0f, 1.0f - z * z));
+    float sinTheta = sqrtf(fmaxf(0.0f, 1.0f - z * z));
 
     float phi = 2.0f * PI * random_float(seed);
 

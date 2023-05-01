@@ -290,7 +290,7 @@ public:
   }
 
   static RAYTRACER_HOST_DEVICE_FUNC float acos_theta(const Vector3f &w) {
-    return acosf(min(max(w.z(), -1.0f + 1e-5f), 1.0f - 1e-5f));
+    return acosf(fminf(fmaxf(w.z(), -1.0f + 1e-5f), 1.0f - 1e-5f));
   }
 
   static RAYTRACER_HOST_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {

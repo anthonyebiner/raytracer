@@ -15,8 +15,8 @@ public:
   Vector3f extent;
 
   __host__ BBox() {
-    maxp = Vector3f(-INF_F, -INF_F, -INF_F);
-    minp = Vector3f(INF_F, INF_F, INF_F);
+    maxp = {-INF_F, -INF_F, -INF_F};
+    minp = {INF_F, INF_F, INF_F};
     extent = maxp - minp;
   }
 
@@ -64,21 +64,21 @@ public:
     return minp.x() > maxp.x() || minp.y() > maxp.y() || minp.z() > maxp.z();
   }
 
-  __host__ bool intersect(Ray *ray) const {
+  __host__ bool intersect(const Ray &ray) const {
     return intersect(minp, maxp, ray);
   }
 
-  __device__ __host__ static bool intersect(Vector3f minp, Vector3f maxp, Ray *ray) {
-    float tmin = 0.0, tmax = ray->hit_t;
+  __device__ __host__ static bool intersect(Vector3f minp, Vector3f maxp, const Ray &ray) {
+    float tmin = 0.0, tmax = ray.max_t;
 
     for (int d = 0; d < 3; ++d) {
-      float t1 = (minp[d] - ray->origin[d]) * ray->inv_d[d];
-      float t2 = (maxp[d] - ray->origin[d]) * ray->inv_d[d];
+      float t1 = (minp[d] - ray.origin[d]) * ray.inv_d[d];
+      float t2 = (maxp[d] - ray.origin[d]) * ray.inv_d[d];
 
       tmin = min(max(t1, tmin), max(t2, tmin));
       tmax = max(min(t1, tmax), min(t2, tmax));
     }
 
-    return tmin <= tmax && tmax > ray->min_t;
+    return tmin <= tmax && tmax > ray.min_t;
   }
 };

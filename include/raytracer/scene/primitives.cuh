@@ -61,7 +61,7 @@ struct Primitive {
     return *this;
   }
 
-  __device__ __host__ bool intersect(Ray *ray) {
+  __device__ __host__ bool intersect(Ray *ray, Intersection *isect) {
     switch (type) {
       case SPHERE: {
         Vector3f a = sphere.origin - ray->origin;
@@ -75,38 +75,42 @@ struct Primitive {
         float t0 = b - disc;
         float t1 = b + disc;
 
-        if (t1 < ray->min_t || t0 > ray->hit_t) return false;
+        if (t1 <= ray->min_t || t0 > ray->max_t) return false;
 
         if (t0 > ray->min_t) {
-          ray->hit_t = t0;
+          ray->max_t = t0;
         } else {
-          if (t1 > ray->hit_t) return false;
-          ray->hit_t = t1;
+          if (t1 > ray->max_t) return false;
+          ray->max_t = t1;
         }
 
-        auto point = ray->origin + ray->hit_t * ray->direction;
-        ray->hit_n = (point - sphere.origin).normalized();
-        ray->hit_p = this;
+        isect->primitive = this;
+        isect->ray = ray;
+        isect->t = ray->max_t;
+        isect->normal = ((ray->origin + ray->max_t * ray->direction) - sphere.origin).normalized();
         return true;
       }
       case TRIANGLE: {
-        auto e1 = triangle.p2 - triangle.p1;
-        auto e2 = triangle.p3 - triangle.p1;
-        auto s = ray->origin - triangle.p1;
-        auto s1 = ray->direction.cross(e2);
-        auto s2 = s.cross(e1);
+        Vector3f e1 = triangle.p2 - triangle.p1;
+        Vector3f e2 = triangle.p3 - triangle.p1;
+        Vector3f s = ray->origin - triangle.p1;
+        Vector3f s1 = ray->direction.cross(e2);
+        Vector3f s2 = s.cross(e1);
 
-        auto c = Vector3f(s2.dot(e2), s1.dot(s), s2.dot(ray->direction)) / s1.dot(e1);
-        auto t = c.x();
+        Vector3f c = Vector3f(s2.dot(e2), s1.dot(s), s2.dot(ray->direction)) / s1.dot(e1);
+        float t = c.x();
 
-        auto b = Vector3f(1 - c.y() - c.z(), c.y(), c.z());
+        Vector3f b = {1 - c.y() - c.z(), c.y(), c.z()};
 
-        if (t < 0 || t < ray->min_t || t > ray->hit_t || b.x() < 0 || b.y() < 0 || b.z() < 0) {
+        if (t < 0 || t <= ray->min_t || t > ray->max_t || b.x() < 0 || b.y() < 0 || b.z() < 0) {
           return false;
         }
-        ray->hit_t = t;
-        ray->hit_n = b.x() * triangle.n1 + b.y() * triangle.n2 + b.z() * triangle.n3;
-        ray->hit_p = this;
+        ray->max_t = t;
+
+        isect->primitive = this;
+        isect->ray = ray;
+        isect->t = ray->max_t;
+        isect->normal = (b.x() * triangle.n1 + b.y() * triangle.n2 + b.z() * triangle.n3).normalized();
         return true;
       }
       case INVALID:

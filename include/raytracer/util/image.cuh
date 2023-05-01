@@ -5,9 +5,10 @@
 using Eigen::Vector3f;
 using Eigen::Vector3d;
 using Eigen::Vector3i;
+using Eigen::Array3d;
 
 
-__device__ inline float illum(const Vector3f &c) {
+__device__ __host__ inline float illum(const Array3d &c) {
   return (float) (0.2126f * c.x() + 0.7152f * c.y() + 0.0722f * c.z());
 }
 
@@ -39,10 +40,10 @@ public:
     }
   }
 
-  __device__ __host__ void update_pixel(const Vector3f &c, uint x, uint y) const {
+  __device__ __host__ void update_pixel(const Array3d &c, uint x, uint y) const {
     assert(0 <= x && x < w);
     assert(0 <= y && y < h);
-    data[x + y * w] = (c.cwiseMax(Vector3f::Zero()).cwiseMin(Vector3f::Ones()) * 255).cast<int>();
+    data[x + y * w] = (c.max(0).min(1) * 255).cast<int>();
   }
 
   __host__ SampleBuffer *to_cuda() const {

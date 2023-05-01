@@ -33,6 +33,13 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(fmtlib)
 
 
+FetchContent_Declare(rapidobj
+        GIT_REPOSITORY https://github.com/guybrush77/rapidobj.git
+        GIT_TAG origin/master)
+
+FetchContent_MakeAvailable(rapidobj)
+
+
 file(GLOB_RECURSE headers CONFIGURE_DEPENDS "${Raytracer_SOURCE_DIR}/include/raytracer/*.cuh")
 add_library(raytracer INTERFACE)
 target_sources(raytracer INTERFACE ${headers})

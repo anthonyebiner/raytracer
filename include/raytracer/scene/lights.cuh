@@ -3,6 +3,7 @@
 #include "Eigen/Dense"
 
 using Eigen::Vector3f;
+using Eigen::Array3f;
 
 class SceneLight {
 public:
@@ -16,7 +17,7 @@ public:
 
   union {
     struct {
-      Vector3f radiance;
+      Array3f radiance;
       Vector3f position;
       Vector3f direction;
       Vector3f dim_x;
@@ -24,18 +25,18 @@ public:
       float area;
     } area;
     struct {
-      Vector3f radiance;
+      Array3f radiance;
       Vector3f position;
     } point;
     struct {
-      Vector3f radiance;
-      Vector3f dirToLight;
+      Array3f radiance;
+      Vector3f dir_to_light;
     } directional;
   };
 
-  __host__ __device__ explicit SceneLight() : type(INVALID) {}
+  __device__ __host__ explicit SceneLight() : type(INVALID) {}
 
-  __host__ __device__ SceneLight(SceneLight const &l) {
+  __device__ __host__ SceneLight(SceneLight const &l) {
     type = l.type;
     switch (type) {
       case AREA: {
@@ -70,30 +71,31 @@ public:
     return *this;
   }
 
-  __device__ Vector3f sample(const Vector3f &p, Vector3f *wi,
-                             float *distToLight, curandState *rand_state) {
+  __device__ __host__ Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
+                                     float *dist_to_light, float *pdf, uint *seed) {
     switch (type) {
       case AREA: {
-        Vector2f sample = CudaSampler2D::sample_grid(rand_state) - Vector2f(0.5f, 0.5f);
-        Vector3f d = area.position + sample.x() * area.dim_x + sample.y() * area.dim_y - p;
-        float cosTheta = d.dot(area.direction);
+        Vector2f sample = Sampler2D::sample_grid(seed) - Vector2f(0.5f, 0.5f);
+        Vector3f d = area.position + sample.x() * area.dim_x + sample.y() * area.dim_y - hit_point;
+        float cos_theta = d.normalized().dot(area.direction);
         float dist = d.norm();
-        float sqDist = powf(dist, 2.f);
-        *wi = d / dist;
-        *distToLight = dist;
-        float pdf = sqDist / (area.area * fabs(cosTheta));
-        Vector3f color = area.radiance / pdf;
-        return cosTheta < 0 ? color : Vector3f::Zero();
+        float dist2 = pow(dist, 2);
+        *o_in = d / dist;
+        *dist_to_light = dist;
+        *pdf = dist2 / (area.area * fabs(cos_theta));
+        return cos_theta < 0 ? area.radiance : Vector3f::Zero();
       }
       case POINT: {
-        Vector3f d = point.position - p;
-        *wi = d.normalized();
-        *distToLight = d.norm();
+        Vector3f d = point.position - hit_point;
+        *o_in = d.normalized();
+        *dist_to_light = d.norm();
+        *pdf = 1;
         return point.radiance;
       }
       case DIRECTIONAL: {
-        *wi = directional.dirToLight;
-        *distToLight = INF_F;
+        *o_in = directional.dir_to_light;
+        *dist_to_light = INF_F;
+        *pdf = 1;
         return directional.radiance;
       }
       case INVALID:
@@ -101,7 +103,7 @@ public:
     }
   }
 
-  __device__ bool is_delta_light() const {
+  __device__ __host__ bool is_delta_light() const {
     switch (type) {
       case AREA: {
         return false;
@@ -118,9 +120,9 @@ public:
   }
 };
 
-class SceneLightFactor {
+class SceneLightFactory {
 public:
-  __host__ static SceneLight create_area(const Vector3f &radiance, const Vector3f &position, const Vector3f &direction,
+  __host__ static SceneLight create_area(const Array3f &radiance, const Vector3f &position, const Vector3f &direction,
                                          const Vector3f &dim_x, const Vector3f &dim_y) {
     auto light = SceneLight();
     light.type = SceneLight::AREA;
@@ -128,14 +130,14 @@ public:
     return light;
   }
 
-  __host__ static SceneLight create_point(const Vector3f &radiance, const Vector3f &position) {
+  __host__ static SceneLight create_point(const Array3f &radiance, const Vector3f &position) {
     auto light = SceneLight();
     light.type = SceneLight::POINT;
     light.point = {radiance, position};
     return light;
   }
 
-  __host__ static SceneLight create_directional(const Vector3f &radiance, const Vector3f &direction) {
+  __host__ static SceneLight create_directional(const Array3f &radiance, const Vector3f &direction) {
     auto light = SceneLight();
     light.type = SceneLight::DIRECTIONAL;
     light.directional = {radiance, (-direction).normalized()};

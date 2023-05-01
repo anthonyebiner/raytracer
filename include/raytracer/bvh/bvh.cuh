@@ -36,6 +36,8 @@ struct BVHAccelOpt {
   uint num_primitives;
   uint num_nodes;
 
+  BVHAccelOpt() {};
+
   BVHAccelOpt(Primitive *primitives, BVHNodeOpt *nodes, uint num_primitives, uint num_nodes)
       : primitives(primitives), nodes(nodes), num_primitives(num_primitives), num_nodes(num_nodes) {};
 
@@ -44,7 +46,7 @@ struct BVHAccelOpt {
     delete[] nodes;
   }
 
-  __device__ __host__ bool intersect(Ray *ray) const {
+  __device__ __host__ bool intersect(Ray *ray, Intersection *isect) const {
     uint stack[MAX_BVH_STACK];
     uint stackIdx = 0;
     stack[stackIdx++] = 0;
@@ -56,13 +58,13 @@ struct BVHAccelOpt {
       BVHNodeOpt node = nodes[nodeIdx];
 
       // INTERSECT WITH BBOX
-      if (!BBox::intersect(node.minp, node.maxp, ray)) continue;
+      if (!BBox::intersect(node.minp, node.maxp, *ray)) continue;
 
       if (node.is_leaf()) {
         // INTERSECT WITH PRIMITIVES
         uint prim_count = node.leaf.count & 0x7fffffff;
         for (uint prim_idx = node.leaf.idx_start; prim_idx < node.leaf.idx_start + prim_count; prim_idx++) {
-          bool h1 = primitives[prim_idx].intersect(ray);
+          bool h1 = primitives[prim_idx].intersect(ray, isect);
           hit = h1 || hit;
         }
       } else {
@@ -80,7 +82,7 @@ struct BVHAccelOpt {
     return hit;
   }
 
-  __host__ BVHAccelOpt *to_cuda() {
+  __host__ BVHAccelOpt *to_cuda() const {
     BVHAccelOpt *bvh;
 
     cudaMalloc(&bvh, sizeof(BVHAccelOpt));
@@ -141,6 +143,8 @@ public:
   std::vector<Primitive *> primitives;
   BVHNode *root;
 
+  BVHAccel() {};
+
   explicit BVHAccel(const std::vector<Primitive *> &_primitives, uint max_leaf_size = 4) {
     primitives = std::vector<Primitive *>(_primitives);
     root = construct_bvh(primitives.begin(), primitives.end(), max_leaf_size);
@@ -169,7 +173,7 @@ public:
     } else {
       auto axis = int(std::distance(&extent[0], std::max_element(&extent[0], &extent[3])));
 
-      auto center = Vector3f(0, 0, 0);
+      Vector3f center = {0, 0, 0};
       for (auto p = start; p != end; p++) {
         center += (*p)->get_bbox().centroid();
       }
@@ -191,8 +195,8 @@ public:
     }
   }
 
-  bool intersect(Ray *ray) const {
-    return intersect(ray, root);
+  bool intersect(Ray *ray, Intersection *isect) const {
+    return intersect(ray, root, isect);
   }
 
   BVHAccelOpt to_optimized_bvh() const {
@@ -218,20 +222,20 @@ public:
     return get_max_depth(root, 0);
   }
 
-  static bool intersect(Ray *ray, BVHNode *node) {
-    if (!node->bb.intersect(ray)) {
+  static bool intersect(Ray *ray, BVHNode *node, Intersection *isect) {
+    if (!node->bb.intersect(*ray)) {
       return false;
     }
     if (node->isLeaf()) {
       bool hit = false;
       for (auto p = node->start; p != node->end; p++) {
-        bool h1 = (*p)->intersect(ray);
+        bool h1 = (*p)->intersect(ray, isect);
         hit = h1 || hit;
       }
       return hit;
     } else {
-      bool h1 = intersect(ray, node->l);
-      bool h2 = intersect(ray, node->r);
+      bool h1 = intersect(ray, node->l, isect);
+      bool h2 = intersect(ray, node->r, isect);
       return h1 || h2;
     }
   }

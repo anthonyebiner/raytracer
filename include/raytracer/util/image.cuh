@@ -45,27 +45,4 @@ public:
     assert(0 <= y && y < h);
     data[x + y * w] = (c.max(0).min(1) * 255).cast<int>();
   }
-
-  SampleBuffer *to_cuda() const {
-    SampleBuffer *buffer;
-
-    cudaMalloc(&buffer, sizeof(SampleBuffer));
-    cudaMemcpy(buffer, this, sizeof(SampleBuffer), cudaMemcpyHostToDevice);
-
-    Vector3f *d_data;
-    cudaMalloc(&d_data, sizeof(Vector3f) * w * h);
-    cudaMemcpy(d_data, data, sizeof(Vector3f) * w * h, cudaMemcpyHostToDevice);
-    cudaMemcpy(&(buffer->data), &d_data, sizeof(Vector3f *), cudaMemcpyHostToDevice);
-
-    return buffer;
-  }
-
-  void from_cuda(SampleBuffer *other) {
-    delete[] data;
-    cudaMemcpy(this, other, sizeof(SampleBuffer), cudaMemcpyDeviceToHost);
-
-    Vector3i *d_data = data;
-    data = (Vector3i *) malloc(sizeof(Vector3i) * w * h);
-    cudaMemcpy(data, d_data, sizeof(Vector3i) * w * h, cudaMemcpyDeviceToHost);
-  }
 };

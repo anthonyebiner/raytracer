@@ -2,7 +2,7 @@
 
 
 struct Generator {
-  static __host__ bool
+  static bool
   room(std::vector<Primitive *> *primitives, float x_scale, float y_scale, float z_scale,
        BSDF *floor_bsdf, BSDF *ceiling_bsdf, BSDF *left_bsdf, BSDF *right_bsdf, BSDF *front_bsdf, BSDF *back_bsdf) {
     // Floor
@@ -91,7 +91,7 @@ struct Generator {
 
   }
 
-  static __host__ bool
+  static bool
   from_obj(std::vector<Primitive *> *primitives, std::string file, BSDF *bsdf = nullptr, Vector3f scale = {1, 1, 1},
            Vector3f translate = {0, 0, 0}) {
     rapidobj::Result result = rapidobj::ParseFile(file);

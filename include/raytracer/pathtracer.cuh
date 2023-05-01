@@ -174,7 +174,6 @@ public:
   }
 
   ~PathTracer() {
-    if (d_bvh_opt != nullptr) cudaFree(d_bvh_opt);
   }
 
   void resize(uint width, uint height) const {
@@ -186,8 +185,6 @@ public:
     primitives = std::vector<Primitive *>(_primitives);
     lights.clear();
     lights = std::vector<SceneLight>(_lights);
-    if (d_bvh_opt != nullptr) cudaFree(d_bvh_opt);
-    d_bvh_opt = nullptr;
   }
 
   void set_camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,

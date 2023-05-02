@@ -212,7 +212,7 @@ public:
     nodes[n_idx].minp = node->bb.minp;
     nodes[n_idx].maxp = node->bb.maxp;
     if (node->isLeaf()) {
-      nodes[n_idx].leaf.count = 0x80000000 | uint(node->end - node->start);
+      nodes[n_idx].leaf.count = 0x80000000 | (uint)(node->end - node->start);
       nodes[n_idx].leaf.idx_start = *prim_start;
       for (auto p = node->start; p != node->end; p++) {
         prims[*prim_start] = **p;

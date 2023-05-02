@@ -10,6 +10,11 @@
 #endif
 
 
+#ifndef uint
+#define uint unsigned int
+#endif
+
+
 #define PI (3.14159265358979323f)
 #define EPS_F (0.00001f)
 #define INF_F INFINITY

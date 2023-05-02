@@ -234,7 +234,7 @@ public:
     BVHAccelOpt bvh_opt = bvh.to_optimized_bvh();
     print("Optimized BVH\n");
 
-    Scene scene = {&bvh_opt, &lights[0], uint(lights.size()), camera.get()};
+    Scene scene = {&bvh_opt, &lights[0], (uint) lights.size(), camera.get()};
 
     print("Raytracing Pixels\n");
     auto start = std::chrono::steady_clock::now();

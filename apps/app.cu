@@ -32,7 +32,7 @@ int main() {
       SceneLightFactory::create_area({20, 20, 20}, {0, 149, 0}, {0, -1, 0}, {80, 0, 0}, {0, 0, 60}));
 
   pathtracer.set_scene(primitives, lights);
-  pathtracer.resize(520, 1024);
+  pathtracer.resize(600, 480);
 
   pathtracer.set_camera({0, 75, -360}, {0, 75, 0}, {0, 1, 0}, 49, 36.75, 0, INF_F, 0, 0);
 

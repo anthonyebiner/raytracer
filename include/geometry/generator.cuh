@@ -9,7 +9,7 @@ using Eigen::Vector3f;
 
 
 struct Generator {
-  static bool
+  static void
   room(std::vector<Primitive *> *primitives, float x_scale, float y_scale, float z_scale,
        BSDF *floor_bsdf, BSDF *ceiling_bsdf, BSDF *left_bsdf, BSDF *right_bsdf, BSDF *front_bsdf, BSDF *back_bsdf) {
     // Floor

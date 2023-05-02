@@ -108,7 +108,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
 }
 
 
-RAYTRACER_HOST_DEVICE_FUNC Array3d
+RAYTRACER_HOST_DEVICE_FUNC void
 fill_color(uint x, uint y, Scene *scene, Parameters *parameters, SampleBuffer *buffer, uint *seed) {
   Vector2f origin = Vector2f(x, y);
   Array3d color = {0, 0, 0};

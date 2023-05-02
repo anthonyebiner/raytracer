@@ -37,13 +37,15 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isec
 
   Vector3f color = {0, 0, 0};
   for (uint i = 0; i < scene->num_lights; i++) {
-    SceneLight light = scene->lights[i];
-    Vector3f L = light.sample(isect.hit_point + bump, &to_light, &distanceToLight, &pdf, seed);
-    Ray shadow_ray = Ray(isect.hit_point + bump, to_light, distanceToLight - EPS_F);
-    if (!scene->bvh->intersect(&shadow_ray, &shadow_isect)) {
-      Vector3f f = isect.primitive->bsdf->f(isect.o_out, isect.w2o * to_light);
-      float cos = max(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
-      color += f * L * cos / pdf;
+    for (uint _ = 0; _ < parameters->samples_per_light; _++) {
+      SceneLight light = scene->lights[i];
+      Vector3f L = light.sample(isect.hit_point + bump, &to_light, &distanceToLight, &pdf, seed);
+      Ray shadow_ray = Ray(isect.hit_point + bump, to_light, distanceToLight - EPS_F);
+      if (!scene->bvh->intersect(&shadow_ray, &shadow_isect)) {
+        Vector3f f = isect.primitive->bsdf->f(isect.o_out, isect.w2o * to_light);
+        float cos = fmaxf(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
+        color += f * L * cos / pdf / parameters->samples_per_light;
+      }
     }
   }
   return color;

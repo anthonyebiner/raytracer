@@ -25,8 +25,9 @@ void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
   for (uint y = 0; y < buffer->h; y++) {
     uint x;
     for (x = 0; x < buffer->w; x++) {
-      uint seed = y * buffer->w + x;
-      Sampler3D::sample_grid(&seed);
+      uint seed = 0x42ffffff & (y * buffer->w + x);
+      for (uint _ = 0; _ < 10; _++) random_float(&seed);
+
       fill_color(x, y, scene, parameters, buffer, &seed);
     }
 #if USE_PROGRESS
@@ -53,8 +54,9 @@ __global__ void raytrace_cuda(Scene *scene, Parameters *parameters,
     return;
   }
 
-  uint seed = y * buffer->w + x;
-  Sampler3D::sample_grid(&seed);
+  uint seed = 0x42ffffff & (y * buffer->w + x);
+  for (uint _ = 0; _ < 10; _++) random_float(&seed);
+
   fill_color(x, y, scene, parameters, buffer, &seed);
 
 #if USE_PROGRESS
@@ -105,11 +107,11 @@ public:
   }
 
   void set_camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,
-                  float vFov, float hFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
+                  float hFov, float vFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
     if (focal_distance == 0) {
       focal_distance = (look_from - look_at).norm();
     }
-    camera = std::make_shared<Camera>(look_from, look_at, up, vFov, hFov, nClip, fClip, aperture, focal_distance);
+    camera = std::make_shared<Camera>(look_from, look_at, up, hFov, vFov, nClip, fClip, aperture, focal_distance);
   }
 
   void save_to_file(const std::string &filename) {
@@ -124,7 +126,7 @@ public:
     print("Image saved to {}\n", filename);
   }
 
-#ifdef __CUDACC__
+#ifdef false
 
   void raytrace() {
     if (!camera) {

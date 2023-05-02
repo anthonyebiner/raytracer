@@ -77,9 +77,9 @@ public:
       case AREA: {
         Vector2f sample = Sampler2D::sample_grid(seed) - Vector2f(0.5f, 0.5f);
         Vector3f d = area.position + sample.x * area.dim_x + sample.y * area.dim_y - hit_point;
-        float cos_theta = d.unit().dot(area.direction);
         float dist = d.norm();
         float dist2 = pow(dist, 2);
+        float cos_theta = d.dot(area.direction) / dist;
         *o_in = d / dist;
         *dist_to_light = dist;
         *pdf = dist2 / (area.area * fabs(cos_theta));

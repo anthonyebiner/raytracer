@@ -9,19 +9,19 @@ class Camera {
 public:
   Vector3f origin;
   Matrix3f c2w;
-  float vFov;
   float hFov;
+  float vFov;
   float nClip;
   float fClip;
   float aperture;
   float focal_distance;
 
   Camera(const Vector3f &look_from, const Vector3f &look_at, Vector3f up,
-         float vFov, float hFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
+         float hFov, float vFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
     this->nClip = nClip;
     this->fClip = fClip;
-    this->vFov = vFov;
     this->hFov = hFov;
+    this->vFov = vFov;
     this->origin = look_from;
     this->aperture = aperture;
     this->focal_distance = focal_distance;

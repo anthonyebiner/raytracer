@@ -36,10 +36,14 @@ public:
   RAYTRACER_DEVICE_FUNC void update_pixel(const Vector3f &c, uint x, uint y) const {
     assert(0 <= x && x < w);
     assert(0 <= y && y < h);
+    float gamma = 2.2f;
+    float level = 1.0f;
+    float one_over_gamma = 1.0f / gamma;
+    float exposure = sqrt(pow(2, level));
     data[x + y * w] = Vector3i(
-        255 * fmaxf(0.f, fminf(1.f, c[0])),
-        255 * fmaxf(0.f, fminf(1.f, c[1])),
-        255 * fmaxf(0.f, fminf(1.f, c[2]))
+        255 * fmaxf(0.f, fminf(1.f, pow(c.r * exposure, one_over_gamma))),
+        255 * fmaxf(0.f, fminf(1.f, pow(c.g * exposure, one_over_gamma))),
+        255 * fmaxf(0.f, fminf(1.f, pow(c.b * exposure, one_over_gamma)))
     );
   }
 

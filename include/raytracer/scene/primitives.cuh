@@ -59,6 +59,53 @@ struct Primitive {
     return *this;
   }
 
+  RAYTRACER_DEVICE_FUNC bool has_intersection(const Ray &ray) {
+    switch (type) {
+      case SPHERE: {
+        Vector3f a = sphere.origin - ray.origin;
+        float b = a.dot(ray.direction);
+        if (b < 0) return false;
+        float c = a.dot(a) - b * b;
+
+        if (c > sphere.r2) return false;
+        float disc = sqrtf(sphere.r2 - c);
+
+        float t0 = b - disc;
+        float t1 = b + disc;
+
+        if (t1 <= ray.min_t || t0 > ray.max_t || (t0 <= ray.min_t && t1 > ray.max_t)) return false;
+
+        if (t0 > ray.min_t) {
+          ray.max_t = t0;
+        } else {
+          if (t1 > ray.max_t) return false;
+          ray.max_t = t1;
+        }
+        return true;
+      }
+      case TRIANGLE: {
+        Vector3f e1 = triangle.p2 - triangle.p1;
+        Vector3f e2 = triangle.p3 - triangle.p1;
+        Vector3f s = ray.origin - triangle.p1;
+        Vector3f s1 = ray.direction.cross(e2);
+        Vector3f s2 = s.cross(e1);
+
+        Vector3f c = Vector3f(s2.dot(e2), s1.dot(s), s2.dot(ray.direction)) / s1.dot(e1);
+        float t = c.x;
+
+        Vector3f b = {1 - c.y - c.z, c.y, c.z};
+
+        if (t < 0 || t <= ray.min_t || t > ray.max_t || b.x < 0 || b.y < 0 || b.z < 0) {
+          return false;
+        }
+        ray.max_t = t;
+        return true;
+      }
+      case INVALID:
+        return 0;
+    }
+  }
+
   RAYTRACER_DEVICE_FUNC bool intersect(const Ray &ray, Intersection *isect) {
     switch (type) {
       case SPHERE: {

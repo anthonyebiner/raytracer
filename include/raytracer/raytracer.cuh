@@ -32,7 +32,6 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isec
   if (isect.primitive->bsdf->is_delta()) return {0, 0, 0};
   Vector3f to_light;
   float distanceToLight, pdf;
-  Intersection shadow_isect;
   Vector3f bump = isect.normal * 0.001;
 
   Vector3f color = {0, 0, 0};
@@ -41,7 +40,7 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isec
       SceneLight light = scene->lights[i];
       Vector3f L = light.sample(isect.hit_point + bump, &to_light, &distanceToLight, &pdf, seed);
       Ray shadow_ray = Ray(isect.hit_point + bump, to_light, distanceToLight - EPS_F);
-      if (!scene->bvh->intersect(shadow_ray, &shadow_isect)) {
+      if (!scene->bvh->has_intersection(shadow_ray)) {
         Vector3f f = isect.primitive->bsdf->f(isect.o_out, isect.w2o * to_light);
         float cos = fmaxf(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
         color += f * L * cos / pdf / parameters->samples_per_light;

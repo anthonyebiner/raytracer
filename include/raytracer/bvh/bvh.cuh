@@ -46,6 +46,40 @@ struct BVHAccelOpt {
     delete[] nodes;
   }
 
+  RAYTRACER_DEVICE_FUNC bool has_intersection(const Ray &ray) const {
+    uint stack[MAX_BVH_STACK];
+    uint stackIdx = 0;
+    stack[stackIdx++] = 0;
+
+
+    while (stackIdx) {
+      uint nodeIdx = stack[--stackIdx];
+      BVHNodeOpt node = nodes[nodeIdx];
+
+      // INTERSECT WITH BBOX
+      if (!BBox::intersect(node.minp, node.maxp, ray)) continue;
+
+      if (node.is_leaf()) {
+        // INTERSECT WITH PRIMITIVES
+        uint prim_count = node.leaf.count & 0x7fffffff;
+        for (uint prim_idx = node.leaf.idx_start; prim_idx < node.leaf.idx_start + prim_count; prim_idx++) {
+          if (primitives[prim_idx].has_intersection(ray)) return true;
+        }
+      } else {
+        // PUSH LEFT AND RIGHT NODES TO STACK
+        stack[stackIdx++] = node.inner.idx_left;
+        stack[stackIdx++] = node.inner.idx_right;
+
+        if (stackIdx > MAX_BVH_STACK) {
+          printf("HIT MAX BVH STACK SIZE!!\n");
+          return false;
+        }
+      }
+    }
+
+    return false;
+  }
+
   RAYTRACER_DEVICE_FUNC bool intersect(const Ray &ray, Intersection *isect) const {
     uint stack[MAX_BVH_STACK];
     uint stackIdx = 0;

@@ -11,8 +11,8 @@ struct Ray {
   Vector3f direction;
   Vector3f inv_d;
 
-  float min_t;
-  float max_t;
+  mutable float min_t;
+  mutable float max_t;
 
   RAYTRACER_DEVICE_FUNC Ray() {};
 
@@ -30,7 +30,7 @@ struct Primitive;
 
 struct Intersection {
   Primitive *primitive;
-  Ray *ray;
+  Ray ray;
   float t;
   Vector3f normal;
 
@@ -45,7 +45,7 @@ struct Intersection {
     make_coord_space(o2w, normal);
     w2o = o2w.T();
 
-    hit_point = ray->origin + ray->direction * t;
-    o_out = (w2o * (-ray->direction)).unit();
+    hit_point = ray.origin + ray.direction * t;
+    o_out = (w2o * (-ray.direction)).unit();
   }
 };

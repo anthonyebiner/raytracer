@@ -47,12 +47,12 @@ public:
   RAYTRACER_DEVICE_FUNC Vector3i(const Vector3i &v) : x(v.x), y(v.y), z(v.z) {}
 
   // dot product (a.k.a. inner or scalar product)
-  RAYTRACER_DEVICE_FUNC inline int dot(const Vector3i &v) {
+  RAYTRACER_DEVICE_FUNC inline const int dot(const Vector3i &v) {
     return v.x * x + v.y * y + v.z * z;
   }
 
 // cross product
-  RAYTRACER_DEVICE_FUNC inline Vector3i cross(const Vector3i &v) {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i cross(const Vector3i &v) const {
     return Vector3i(y * v.z - z * v.y,
                     z * v.x - x * v.z,
                     x * v.y - y * v.x);
@@ -68,42 +68,42 @@ public:
     return (&x)[index];
   }
 
-  RAYTRACER_DEVICE_FUNC inline bool operator==(const Vector3i &v) const {
+  RAYTRACER_DEVICE_FUNC inline const bool operator==(const Vector3i &v) const {
     return v.x == x && v.y == y && v.z == z;
   }
 
   // negation
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator-(void) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator-(void) const {
     return Vector3i(-x, -y, -z);
   }
 
   // addition
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator+(const Vector3i &v) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator+(const Vector3i &v) const {
     return Vector3i(x + v.x, y + v.y, z + v.z);
   }
 
   // subtraction
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator-(const Vector3i &v) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator-(const Vector3i &v) const {
     return Vector3i(x - v.x, y - v.y, z - v.z);
   }
 
   // element wise multiplication
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator*(const Vector3i &v) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator*(const Vector3i &v) const {
     return Vector3i(x * v.x, y * v.y, z * v.z);
   }
 
   // element wise division
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator/(const Vector3i &v) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator/(const Vector3i &v) const {
     return Vector3i(x / v.x, y / v.y, z / v.z);
   }
 
   // right scalar multiplication
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator*(const int &c) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator*(const int &c) const {
     return Vector3i(x * c, y * c, z * c);
   }
 
   // scalar division
-  RAYTRACER_DEVICE_FUNC inline Vector3i operator/(const int &c) const {
+  RAYTRACER_DEVICE_FUNC inline const Vector3i operator/(const int &c) const {
     const int rc = 1.0 / c;
     return Vector3i(rc * x, rc * y, rc * z);
   }
@@ -144,14 +144,14 @@ public:
   /**
    * Returns Euclidean length.
    */
-  RAYTRACER_DEVICE_FUNC inline int norm(void) const {
+  RAYTRACER_DEVICE_FUNC inline const int norm(void) const {
     return sqrt(x * x + y * y + z * z);
   }
 
   /**
    * Returns Euclidean length squared.
    */
-  RAYTRACER_DEVICE_FUNC inline int norm2(void) const {
+  RAYTRACER_DEVICE_FUNC inline const int norm2(void) const {
     return x * x + y * y + z * z;
   }
 
@@ -170,18 +170,18 @@ public:
     (*this) /= norm();
   }
 
-  RAYTRACER_DEVICE_FUNC inline int illum() const {
+  RAYTRACER_DEVICE_FUNC inline const int illum() const {
     return 0.2126f * r + 0.7152f * g + 0.0722f * b;
   }
 
 }; // class Vector3D
 
 // left scalar multiplication
-RAYTRACER_DEVICE_FUNC inline Vector3i operator*(const int &c, const Vector3i &v) {
+RAYTRACER_DEVICE_FUNC inline const Vector3i operator*(const int &c, const Vector3i &v) {
   return Vector3i(c * v.x, c * v.y, c * v.z);
 }
 
 // left scalar divide
-RAYTRACER_DEVICE_FUNC inline Vector3i operator/(const int &c, const Vector3i &v) {
+RAYTRACER_DEVICE_FUNC inline const Vector3i operator/(const int &c, const Vector3i &v) {
   return Vector3i(c / v.x, c / v.y, c / v.z);
 }

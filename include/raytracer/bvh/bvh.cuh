@@ -46,7 +46,7 @@ struct BVHAccelOpt {
     delete[] nodes;
   }
 
-  RAYTRACER_DEVICE_FUNC bool intersect(Ray *ray, Intersection *isect) const {
+  RAYTRACER_DEVICE_FUNC bool intersect(const Ray &ray, Intersection *isect) const {
     uint stack[MAX_BVH_STACK];
     uint stackIdx = 0;
     stack[stackIdx++] = 0;
@@ -58,7 +58,7 @@ struct BVHAccelOpt {
       BVHNodeOpt node = nodes[nodeIdx];
 
       // INTERSECT WITH BBOX
-      if (!BBox::intersect(node.minp, node.maxp, *ray)) continue;
+      if (!BBox::intersect(node.minp, node.maxp, ray)) continue;
 
       if (node.is_leaf()) {
         // INTERSECT WITH PRIMITIVES
@@ -200,7 +200,7 @@ public:
     }
   }
 
-  bool intersect(Ray *ray, Intersection *isect) const {
+  bool intersect(const Ray &ray, Intersection *isect) const {
     return intersect(ray, root, isect);
   }
 
@@ -227,8 +227,8 @@ public:
     return get_max_depth(root, 0);
   }
 
-  static bool intersect(Ray *ray, BVHNode *node, Intersection *isect) {
-    if (!node->bb.intersect(*ray)) {
+  static bool intersect(const Ray &ray, BVHNode *node, Intersection *isect) {
+    if (!node->bb.intersect(ray)) {
       return false;
     }
     if (node->isLeaf()) {
@@ -251,7 +251,7 @@ public:
     nodes[n_idx].minp = node->bb.minp;
     nodes[n_idx].maxp = node->bb.maxp;
     if (node->isLeaf()) {
-      nodes[n_idx].leaf.count = 0x80000000 | (uint)(node->end - node->start);
+      nodes[n_idx].leaf.count = 0x80000000 | (uint) (node->end - node->start);
       nodes[n_idx].leaf.idx_start = *prim_start;
       for (auto p = node->start; p != node->end; p++) {
         prims[*prim_start] = **p;
@@ -272,7 +272,7 @@ public:
 
   static uint get_max_depth(BVHNode *node, uint depth) {
     if (node->isLeaf()) return depth;
-    return max(get_max_depth(node->l, depth + 1), get_max_depth(node->r, depth + 1));
+    return fmaxf(get_max_depth(node->l, depth + 1), get_max_depth(node->r, depth + 1));
   }
 };
 

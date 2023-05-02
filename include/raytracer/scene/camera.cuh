@@ -16,7 +16,7 @@ public:
   float aperture;
   float focal_distance;
 
-  Camera(const Vector3f &look_from, const Vector3f &look_at, Vector3f up,
+  Camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,
          float hFov, float vFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
     this->nClip = nClip;
     this->fClip = fClip;

@@ -36,7 +36,7 @@ public:
 
   RAYTRACER_DEVICE_FUNC explicit SceneLight() : type(INVALID) {}
 
-  RAYTRACER_DEVICE_FUNC SceneLight(SceneLight const &l) {
+  RAYTRACER_DEVICE_FUNC SceneLight(const SceneLight &l) {
     type = l.type;
     switch (type) {
       case AREA: {
@@ -53,7 +53,7 @@ public:
     }
   }
 
-  SceneLight &operator=(SceneLight const &l) {
+  SceneLight &operator=(const SceneLight &l) {
     type = l.type;
     switch (type) {
       case AREA: {

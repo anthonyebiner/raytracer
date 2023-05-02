@@ -41,7 +41,7 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isec
       SceneLight light = scene->lights[i];
       Vector3f L = light.sample(isect.hit_point + bump, &to_light, &distanceToLight, &pdf, seed);
       Ray shadow_ray = Ray(isect.hit_point + bump, to_light, distanceToLight - EPS_F);
-      if (!scene->bvh->intersect(&shadow_ray, &shadow_isect)) {
+      if (!scene->bvh->intersect(shadow_ray, &shadow_isect)) {
         Vector3f f = isect.primitive->bsdf->f(isect.o_out, isect.w2o * to_light);
         float cos = fmaxf(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
         color += f * L * cos / pdf / parameters->samples_per_light;
@@ -60,7 +60,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
 
   for (uint i = 0; i <= parameters->max_ray_depth; i++) {
     Intersection isect;
-    if (!scene->bvh->intersect(&ray, &isect)) break;
+    if (!scene->bvh->intersect(ray, &isect)) break;
     isect.compute();
 
     if ((i == 0 || prev_isect.primitive->bsdf->is_delta()) && isect.primitive->bsdf->type == BSDF::EMISSION) {

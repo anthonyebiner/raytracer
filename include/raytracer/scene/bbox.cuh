@@ -64,7 +64,7 @@ public:
     return intersect(minp, maxp, ray);
   }
 
-  RAYTRACER_DEVICE_FUNC static bool intersect(Vector3f minp, Vector3f maxp, const Ray &ray) {
+  RAYTRACER_DEVICE_FUNC static bool intersect(const Vector3f &minp, const Vector3f &maxp, const Ray &ray) {
     float tmin = 0.0, tmax = ray.max_t;
 
     for (int d = 0; d < 3; ++d) {

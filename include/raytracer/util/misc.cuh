@@ -10,7 +10,7 @@
 #endif
 
 
-#if defined(_WIN64) || defined(_WIN32)
+#ifndef uint
 #define uint unsigned int
 #endif
 

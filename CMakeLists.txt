@@ -53,4 +53,7 @@ source_group(
         PREFIX "Header Files"
         FILES ${HEADER_LIST})
 
-add_subdirectory(apps)
+
+if (CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+    add_subdirectory(apps)
+endif ()

@@ -8,14 +8,14 @@ using fmt::print;
 int main() {
   printf("Starting program\n");
 
-  PathTracer pathtracer = PathTracer({1000, 1, 50, 0.005f, 7, 4});
+  PathTracer pathtracer = PathTracer({1000, 4, 50, 0.005f, 7, 4});
 
   std::vector<Primitive *> primitives;
   Generator::room(&primitives, 200, 150, 200,
                   &white_bsdf, &white_bsdf, &red_bsdf, &blue_bsdf, nullptr, &white_bsdf);
 
-  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({-40, 30, 30}, 30, &mirror_bsdf)));
-  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({40, 30, -30}, 30, &glass_bsdf)));
+  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({-40, 30, 30}, 30, &white_bsdf)));
+  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({40, 30, -30}, 30, &white_bsdf)));
 
   BSDF white_light_bsdf = BSDFFactory::createEmission({10, 10, 10});
   primitives.push_back(new Primitive(
@@ -34,7 +34,7 @@ int main() {
   pathtracer.set_scene(primitives, lights);
   pathtracer.resize(600, 480);
 
-  pathtracer.set_camera({0, 75, -360}, {0, 75, 0}, {0, 1, 0}, 49, 36.75, 0, INF_F, 0, 0);
+  pathtracer.set_camera({0, 75, -400}, {0, 75, 0}, {0, 1, 0}, 49, 36.75, 0, INF_F, 0, 0);
 
   pathtracer.raytrace();
   pathtracer.save_to_file("test1.bmp");

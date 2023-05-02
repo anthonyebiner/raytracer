@@ -57,7 +57,7 @@ public:
   /**
    * Returns the determinant of A.
    */
-  RAYTRACER_DEVICE_FUNC const float det(void) const {
+  RAYTRACER_DEVICE_FUNC float det(void) const {
     const Matrix3f &A(*this);
 
     return -A(0, 2) * A(1, 1) * A(2, 0) + A(0, 1) * A(1, 2) * A(2, 0) +
@@ -68,7 +68,7 @@ public:
   /**
    * Returns the Frobenius norm of A.
    */
-  RAYTRACER_DEVICE_FUNC const float norm(void) const {
+  RAYTRACER_DEVICE_FUNC float norm(void) const {
     return sqrt(entries[0].norm2() +
                 entries[1].norm2() +
                 entries[2].norm2());
@@ -77,7 +77,7 @@ public:
   /**
    * Returns the 3x3 identity matrix.
    */
-  RAYTRACER_DEVICE_FUNC static const Matrix3f identity(void) {
+  RAYTRACER_DEVICE_FUNC static Matrix3f identity(void) {
     Matrix3f B;
 
     B(0, 0) = 1.;
@@ -97,7 +97,7 @@ public:
   /**
    * Returns a matrix representing the (left) cross product with u.
    */
-  RAYTRACER_DEVICE_FUNC static const Matrix3f crossProduct(const Vector3f &u) {
+  RAYTRACER_DEVICE_FUNC static Matrix3f crossProduct(const Vector3f &u) {
     Matrix3f B;
 
     B(0, 0) = 0.;
@@ -127,7 +127,7 @@ public:
   /**
    * Returns the transpose of A.
    */
-  RAYTRACER_DEVICE_FUNC const Matrix3f T(void) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f T(void) const {
     const Matrix3f &A(*this);
     Matrix3f B;
 
@@ -142,7 +142,7 @@ public:
   /**
    * Returns the inverse of A.
    */
-  RAYTRACER_DEVICE_FUNC const Matrix3f inv(void) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f inv(void) const {
     const Matrix3f &A(*this);
     Matrix3f B;
 
@@ -181,8 +181,7 @@ public:
   }
 
   // increments by B
-  RAYTRACER_DEVICE_FUNC void operator+=(const Matrix3f &B) {
-
+  RAYTRACER_DEVICE_FUNC void operator+=(Matrix3f &B) {
     Matrix3f &A(*this);
 
     A[0] += B[0];
@@ -191,7 +190,7 @@ public:
   }
 
   // returns -A
-  RAYTRACER_DEVICE_FUNC const Matrix3f operator-(void) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator-(void) const {
 
     // returns -A
     const Matrix3f &A(*this);
@@ -205,7 +204,7 @@ public:
   }
 
   // returns A-B
-  RAYTRACER_DEVICE_FUNC const Matrix3f operator-(const Matrix3f &B) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator-(Matrix3f &B) const {
     const Matrix3f &A(*this);
     Matrix3f C;
 
@@ -217,7 +216,7 @@ public:
   }
 
   // returns c*A
-  RAYTRACER_DEVICE_FUNC const Matrix3f operator*(float c) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator*(float c) const {
     const Matrix3f &A(*this);
     Matrix3f B;
 
@@ -229,7 +228,7 @@ public:
   }
 
   // returns A*B
-  RAYTRACER_DEVICE_FUNC const Matrix3f operator*(const Matrix3f &B) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator*(Matrix3f &B) const {
     const Matrix3f &A(*this);
     Matrix3f C;
 
@@ -241,7 +240,7 @@ public:
   }
 
   // returns A*x
-  RAYTRACER_DEVICE_FUNC const Vector3f operator*(const Vector3f &x) const {
+  RAYTRACER_DEVICE_FUNC Vector3f operator*(const Vector3f &x) const {
     return x.x * entries[0] +
            x.y * entries[1] +
            x.z * entries[2];
@@ -259,7 +258,7 @@ public:
 }; // class Matrix3x3
 
 // returns the outer product of u and v
-RAYTRACER_DEVICE_FUNC const Matrix3f outer(const Vector3f &u, const Vector3f &v) {
+RAYTRACER_DEVICE_FUNC Matrix3f outer(const Vector3f &u, const Vector3f &v) {
   Matrix3f B;
   double *Bij = (double *) &B;
 
@@ -277,7 +276,7 @@ RAYTRACER_DEVICE_FUNC const Matrix3f outer(const Vector3f &u, const Vector3f &v)
 }
 
 // returns c*A
-RAYTRACER_DEVICE_FUNC const Matrix3f operator*(float c, const Matrix3f &A) {
+RAYTRACER_DEVICE_FUNC Matrix3f operator*(float c, Matrix3f &A) {
   Matrix3f cA;
 
   cA[0] = A[0] * c;

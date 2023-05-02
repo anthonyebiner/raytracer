@@ -31,12 +31,12 @@ public:
   RAYTRACER_DEVICE_FUNC Vector2f(const Vector2f &v) : x(v.x), y(v.y) {}
 
   // inner product
-  RAYTRACER_DEVICE_FUNC inline const float dot(const Vector2f &v) {
+  RAYTRACER_DEVICE_FUNC inline float dot(const Vector2f &v) const {
     return x * v.x + y * v.y;
   }
 
   // cross product
-  RAYTRACER_DEVICE_FUNC inline const float cross(const Vector2f &v) {
+  RAYTRACER_DEVICE_FUNC inline float cross(const Vector2f &v) const {
     return x * v.y - y * v.x;
   }
 
@@ -51,33 +51,33 @@ public:
   }
 
   // additive inverse
-  RAYTRACER_DEVICE_FUNC inline const Vector2f operator-(void) const {
+  RAYTRACER_DEVICE_FUNC inline Vector2f operator-(void) const {
     return Vector2f(-x, -y);
   }
 
   // addition
-  RAYTRACER_DEVICE_FUNC inline const Vector2f operator+(const Vector2f &v) const {
+  RAYTRACER_DEVICE_FUNC inline Vector2f operator+(const Vector2f &v) const {
     Vector2f u = *this;
     u += v;
     return u;
   }
 
   // subtraction
-  RAYTRACER_DEVICE_FUNC inline const Vector2f operator-(const Vector2f &v) const {
+  RAYTRACER_DEVICE_FUNC inline Vector2f operator-(const Vector2f &v) const {
     Vector2f u = *this;
     u -= v;
     return u;
   }
 
   // right scalar multiplication
-  RAYTRACER_DEVICE_FUNC inline const Vector2f operator*(float r) const {
+  RAYTRACER_DEVICE_FUNC inline Vector2f operator*(float r) const {
     Vector2f vr = *this;
     vr *= r;
     return vr;
   }
 
   // scalar division
-  RAYTRACER_DEVICE_FUNC inline const Vector2f operator/(float r) const {
+  RAYTRACER_DEVICE_FUNC inline Vector2f operator/(float r) const {
     Vector2f vr = *this;
     vr /= r;
     return vr;
@@ -110,14 +110,14 @@ public:
   /**
    * Returns norm.
    */
-  RAYTRACER_DEVICE_FUNC inline const float norm(void) const {
+  RAYTRACER_DEVICE_FUNC inline float norm(void) const {
     return sqrt(x * x + y * y);
   }
 
   /**
    * Returns norm squared.
    */
-  RAYTRACER_DEVICE_FUNC inline const float norm2(void) const {
+  RAYTRACER_DEVICE_FUNC inline float norm2(void) const {
     return x * x + y * y;
   }
 
@@ -132,6 +132,6 @@ public:
 }; // clasd Vector2D
 
 // left scalar multiplication
-RAYTRACER_DEVICE_FUNC inline const Vector2f operator*(float r, const Vector2f &v) {
+RAYTRACER_DEVICE_FUNC inline Vector2f operator*(float r, const Vector2f &v) {
   return v * r;
 }

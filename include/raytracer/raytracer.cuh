@@ -28,7 +28,7 @@ struct Scene {
 
 
 static RAYTRACER_DEVICE_FUNC Vector3f
-estimate_direct_lighting(Scene *scene, Parameters *parameters, Intersection isect, uint *seed) {
+estimate_direct_lighting(Scene *scene, Parameters *parameters, const Intersection &isect, uint *seed) {
   if (isect.primitive->bsdf->is_delta()) return {0, 0, 0};
   Vector3f to_light;
   float distanceToLight, pdf;

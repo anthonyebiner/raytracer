@@ -2,8 +2,15 @@ cmake_minimum_required(VERSION 3.26)
 project(
         Raytracer
         VERSION 0.0.1
-        DESCRIPTION "A simple CUDA raytracer"
-        LANGUAGES CUDA CXX)
+        DESCRIPTION "A simple CUDA raytracer")
+
+include(CheckLanguage)
+check_language(CUDA)
+if (CMAKE_CUDA_COMPILER)
+    enable_language(CUDA CXX)
+else ()
+    enable_language(CXX)
+endif ()
 
 set(CMAKE_CUDA_STANDARD 17)
 
@@ -39,7 +46,7 @@ target_sources(raytracer INTERFACE ${headers})
 
 target_include_directories(raytracer INTERFACE "${PROJECT_SOURCE_DIR}/include")
 set_target_properties(raytracer PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-target_link_libraries(raytracer INTERFACE Eigen3::Eigen fmt::fmt)
+target_link_libraries(raytracer INTERFACE Eigen3::Eigen rapidobj::rapidobj fmt::fmt)
 source_group(
         TREE "${PROJECT_SOURCE_DIR}/include"
         PREFIX "Header Files"

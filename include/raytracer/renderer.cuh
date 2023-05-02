@@ -126,7 +126,7 @@ public:
     print("Image saved to {}\n", filename);
   }
 
-#ifdef false
+#ifdef __CUDACC__
 
   void raytrace() {
     if (!camera) {

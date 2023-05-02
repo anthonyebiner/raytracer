@@ -47,7 +47,7 @@ target_sources(raytracer INTERFACE ${headers})
 
 target_include_directories(raytracer INTERFACE "${PROJECT_SOURCE_DIR}/include")
 set_target_properties(raytracer PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
-target_link_libraries(raytracer INTERFACE Eigen3::Eigen fmt::fmt)
+target_link_libraries(raytracer INTERFACE Eigen3::Eigen fmt::fmt rapidobj::rapidobj)
 source_group(
         TREE "${PROJECT_SOURCE_DIR}/include"
         PREFIX "Header Files"

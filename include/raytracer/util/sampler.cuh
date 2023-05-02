@@ -7,7 +7,7 @@
 using Eigen::Vector2f;
 using Eigen::Vector3f;
 
-static inline RAYTRACER_HOST_DEVICE_FUNC float random_float(uint *state) {
+static inline RAYTRACER_DEVICE_FUNC float random_float(uint *state) {
   uint x = *state;
   x ^= x << 13;
   x ^= x >> 17;
@@ -18,29 +18,29 @@ static inline RAYTRACER_HOST_DEVICE_FUNC float random_float(uint *state) {
 
 class Sampler1D {
 public:
-  RAYTRACER_HOST_DEVICE_FUNC static float random(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static float random(uint *seed) {
     return random_float(seed);
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC static bool coin_flip(uint *seed, float p) {
+  RAYTRACER_DEVICE_FUNC static bool coin_flip(uint *seed, float p) {
     return random_float(seed) < p;
   }
 };
 
 class Sampler2D {
 public:
-  RAYTRACER_HOST_DEVICE_FUNC static Vector2f sample_grid(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static Vector2f sample_grid(uint *seed) {
     return {random_float(seed), random_float(seed)};
   }
 };
 
 class Sampler3D {
 public:
-  RAYTRACER_HOST_DEVICE_FUNC static Vector3f sample_grid(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static Vector3f sample_grid(uint *seed) {
     return {random_float(seed), random_float(seed), random_float(seed)};
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC static Vector3f sample_sphere(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static Vector3f sample_sphere(uint *seed) {
     float z = random_float(seed) * 2 - 1;
     float sinTheta = sqrtf(fmaxf(0.0f, 1.0f - z * z));
 
@@ -49,7 +49,7 @@ public:
     return {cosf(phi) * sinTheta, sinf(phi) * sinTheta, z};
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC static Vector3f sample_hemisphere(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static Vector3f sample_hemisphere(uint *seed) {
     float Xi1 = random_float(seed);
     float Xi2 = random_float(seed);
 
@@ -63,7 +63,7 @@ public:
     return {xs, ys, zs};
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC static Vector3f sample_cosine_weighted_hemisphere(uint *seed) {
+  RAYTRACER_DEVICE_FUNC static Vector3f sample_cosine_weighted_hemisphere(uint *seed) {
     float Xi1 = random_float(seed);
     float Xi2 = random_float(seed);
 

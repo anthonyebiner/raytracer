@@ -61,7 +61,7 @@ struct Primitive {
     return *this;
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC bool intersect(Ray *ray, Intersection *isect) {
+  RAYTRACER_DEVICE_FUNC bool intersect(Ray *ray, Intersection *isect) {
     switch (type) {
       case SPHERE: {
         Vector3f a = sphere.origin - ray->origin;

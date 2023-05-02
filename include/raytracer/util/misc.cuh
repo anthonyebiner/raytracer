@@ -1,12 +1,10 @@
 #pragma once
 
 
-#if defined(__CUDACC__)
-#define RAYTRACER_HOST_DEVICE_FUNC __host__ __device__
-#define RAYTRACER_HOST_FUNC __host__
+#ifdef __CUDACC__
+#define RAYTRACER_DEVICE_FUNC __host__ __device__
 #else
-#define RAYTRACER_HOST_DEVICE_FUNC
-#define RAYTRACER_HOST_FUNC
+#define RAYTRACER_DEVICE_FUNC
 #endif
 
 
@@ -38,17 +36,17 @@
 
 
 template<typename T>
-RAYTRACER_HOST_DEVICE_FUNC inline T radians(T deg) {
+RAYTRACER_DEVICE_FUNC inline T radians(T deg) {
   return deg * (PI / 180);
 }
 
 template<typename T>
-RAYTRACER_HOST_DEVICE_FUNC inline T degrees(T rad) {
+RAYTRACER_DEVICE_FUNC inline T degrees(T rad) {
   return rad * (180 / PI);
 }
 
 template<typename T>
-RAYTRACER_HOST_DEVICE_FUNC inline T clamp(T x, T lo, T hi) {
+RAYTRACER_DEVICE_FUNC inline T clamp(T x, T lo, T hi) {
   return std::min(std::max(x, lo), hi);
 }
 

@@ -34,9 +34,9 @@ public:
     } directional;
   };
 
-  RAYTRACER_HOST_DEVICE_FUNC explicit SceneLight() : type(INVALID) {}
+  RAYTRACER_DEVICE_FUNC explicit SceneLight() : type(INVALID) {}
 
-  RAYTRACER_HOST_DEVICE_FUNC SceneLight(SceneLight const &l) {
+  RAYTRACER_DEVICE_FUNC SceneLight(SceneLight const &l) {
     type = l.type;
     switch (type) {
       case AREA: {
@@ -71,8 +71,8 @@ public:
     return *this;
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
-                                            float *dist_to_light, float *pdf, uint *seed) {
+  RAYTRACER_DEVICE_FUNC Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
+                                       float *dist_to_light, float *pdf, uint *seed) {
     switch (type) {
       case AREA: {
         Vector2f sample = Sampler2D::sample_grid(seed) - Vector2f(0.5f, 0.5f);
@@ -103,7 +103,7 @@ public:
     }
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC bool is_delta_light() const {
+  RAYTRACER_DEVICE_FUNC bool is_delta_light() const {
     switch (type) {
       case AREA: {
         return false;

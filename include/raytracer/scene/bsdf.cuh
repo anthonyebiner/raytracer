@@ -7,7 +7,7 @@ using Eigen::Array3f;
 using Eigen::Vector3f;
 using Eigen::Matrix3f;
 
-RAYTRACER_HOST_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
+RAYTRACER_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
   Vector3f z = {n.x(), n.y(), n.z()};
   Vector3f h = z;
   if (fabs(h.x()) <= fabs(h.y()) && fabs(h.x()) <= fabs(h.z()))
@@ -132,7 +132,7 @@ public:
     return *this;
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC bool is_delta() const {
+  RAYTRACER_DEVICE_FUNC bool is_delta() const {
     switch (type) {
       case REFLECTION: {
         return true;
@@ -149,7 +149,7 @@ public:
     }
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Vector3f get_emission() const {
+  RAYTRACER_DEVICE_FUNC Vector3f get_emission() const {
     switch (type) {
       case EMISSION: {
         return emission.radiance;
@@ -160,7 +160,7 @@ public:
     }
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Array3f f(const Vector3f &o_out, const Vector3f &o_in) {
+  RAYTRACER_DEVICE_FUNC Array3f f(const Vector3f &o_out, const Vector3f &o_in) {
     switch (type) {
       case DIFFUSE: {
         return diffuse.reflectance / PI;
@@ -183,7 +183,7 @@ public:
     }
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Vector3f
+  RAYTRACER_DEVICE_FUNC Vector3f
   sample(const Vector3f &o_out, Array3f *mask, float *pdf, uint *seed) {
     float cos_o_out = o_out.z();
     Vector3f o_in;
@@ -285,31 +285,31 @@ public:
     }
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC float cos_theta(const Vector3f &w) {
+  static RAYTRACER_DEVICE_FUNC float cos_theta(const Vector3f &w) {
     return w.z();
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC float acos_theta(const Vector3f &w) {
+  static RAYTRACER_DEVICE_FUNC float acos_theta(const Vector3f &w) {
     return acosf(fminf(fmaxf(w.z(), -1.0f + 1e-5f), 1.0f - 1e-5f));
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {
+  static RAYTRACER_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {
     float theta = acos_theta(w);
     float a = 1.0f / (alpha * tanf(theta));
     return 0.5f * (erff(a) - 1.0f + expf(-a * a) / (a * PI));
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC double shadow_masking(const Vector3f &o_out, const Vector3f &wi, float alpha) {
+  static RAYTRACER_DEVICE_FUNC double shadow_masking(const Vector3f &o_out, const Vector3f &wi, float alpha) {
     return 1.0 / (1.0 + lambda(wi, alpha) + lambda(o_out, alpha));
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC double ndf(const Vector3f &h, float alpha) {
+  static RAYTRACER_DEVICE_FUNC double ndf(const Vector3f &h, float alpha) {
     double t = acos_theta(h);
     double a2 = alpha * alpha;
     return exp(-(pow(tan(t), 2) / a2)) / (PI * a2 * pow(cos(t), 4));
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC Array3f fresnel(const Vector3f &o_in, const Array3f &eta, const Array3f &k) {
+  static RAYTRACER_DEVICE_FUNC Array3f fresnel(const Vector3f &o_in, const Array3f &eta, const Array3f &k) {
     float t = acos_theta(o_in);
     Array3f a = eta * eta + k * k;
     Array3f b = 2 * eta * cos(t);
@@ -319,12 +319,12 @@ public:
     return (rs + rp) / 2;
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC void reflect(const Vector3f &wo, Vector3f *wi) {
+  static RAYTRACER_DEVICE_FUNC void reflect(const Vector3f &wo, Vector3f *wi) {
     Vector3f out = {-wo.x(), -wo.y(), wo.z()};
     *wi = out;
   }
 
-  static RAYTRACER_HOST_DEVICE_FUNC bool refract(const Vector3f &wo, Vector3f *wi, float ior) {
+  static RAYTRACER_DEVICE_FUNC bool refract(const Vector3f &wo, Vector3f *wi, float ior) {
     float n = wo.z() > 0 ? 1 / ior : ior;
     float n2 = powf(n, 2);
     float z2 = powf(wo.z(), 2);

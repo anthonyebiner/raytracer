@@ -37,7 +37,7 @@ public:
     c2w.col(2) = dirToCamera.normalized();
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Ray generate_ray(float x, float y) const {
+  RAYTRACER_DEVICE_FUNC Ray generate_ray(float x, float y) const {
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
     Ray world_ray = Ray(origin, (c2w * camera_vector).normalized());
     world_ray.min_t = nClip;
@@ -45,7 +45,7 @@ public:
     return world_ray;
   }
 
-  RAYTRACER_HOST_DEVICE_FUNC Ray generate_ray_for_thin_lens(float x, float y, float rndR, float rndTheta) const {
+  RAYTRACER_DEVICE_FUNC Ray generate_ray_for_thin_lens(float x, float y, float rndR, float rndTheta) const {
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
 
     Vector3f p_lens = {aperture * sqrtf(rndR) * cosf(rndTheta), aperture * sqrtf(rndR) * sinf(rndTheta), 0};

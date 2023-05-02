@@ -181,7 +181,7 @@ public:
   }
 
   // increments by B
-  RAYTRACER_DEVICE_FUNC void operator+=(Matrix3f &B) {
+  RAYTRACER_DEVICE_FUNC void operator+=(const Matrix3f &B) {
     Matrix3f &A(*this);
 
     A[0] += B[0];
@@ -204,7 +204,7 @@ public:
   }
 
   // returns A-B
-  RAYTRACER_DEVICE_FUNC Matrix3f operator-(Matrix3f &B) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator-(const Matrix3f &B) const {
     const Matrix3f &A(*this);
     Matrix3f C;
 
@@ -228,7 +228,7 @@ public:
   }
 
   // returns A*B
-  RAYTRACER_DEVICE_FUNC Matrix3f operator*(Matrix3f &B) const {
+  RAYTRACER_DEVICE_FUNC Matrix3f operator*(const Matrix3f &B) const {
     const Matrix3f &A(*this);
     Matrix3f C;
 
@@ -276,7 +276,7 @@ RAYTRACER_DEVICE_FUNC Matrix3f outer(const Vector3f &u, const Vector3f &v) {
 }
 
 // returns c*A
-RAYTRACER_DEVICE_FUNC Matrix3f operator*(float c, Matrix3f &A) {
+RAYTRACER_DEVICE_FUNC Matrix3f operator*(float c, const Matrix3f &A) {
   Matrix3f cA;
 
   cA[0] = A[0] * c;

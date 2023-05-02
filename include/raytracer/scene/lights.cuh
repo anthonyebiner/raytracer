@@ -1,9 +1,9 @@
 #pragma once
 
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
-using Eigen::Array3f;
+#include "raytracer/util/misc.cuh"
+#include "raytracer/linalg/Vector3f.cuh"
+#include "raytracer/util/sampler.cuh"
+#include "raytracer/linalg/Vector2f.cuh"
 
 class SceneLight {
 public:
@@ -17,7 +17,7 @@ public:
 
   union {
     struct {
-      Array3f radiance;
+      Vector3f radiance;
       Vector3f position;
       Vector3f direction;
       Vector3f dim_x;
@@ -25,11 +25,11 @@ public:
       float area;
     } area;
     struct {
-      Array3f radiance;
+      Vector3f radiance;
       Vector3f position;
     } point;
     struct {
-      Array3f radiance;
+      Vector3f radiance;
       Vector3f dir_to_light;
     } directional;
   };
@@ -71,23 +71,23 @@ public:
     return *this;
   }
 
-  RAYTRACER_DEVICE_FUNC Array3f sample(const Vector3f &hit_point, Vector3f *o_in,
-                                       float *dist_to_light, float *pdf, uint *seed) {
+  RAYTRACER_DEVICE_FUNC Vector3f sample(const Vector3f &hit_point, Vector3f *o_in,
+                                        float *dist_to_light, float *pdf, uint *seed) {
     switch (type) {
       case AREA: {
         Vector2f sample = Sampler2D::sample_grid(seed) - Vector2f(0.5f, 0.5f);
-        Vector3f d = area.position + sample.x() * area.dim_x + sample.y() * area.dim_y - hit_point;
-        float cos_theta = d.normalized().dot(area.direction);
+        Vector3f d = area.position + sample.x * area.dim_x + sample.y * area.dim_y - hit_point;
+        float cos_theta = d.unit().dot(area.direction);
         float dist = d.norm();
         float dist2 = pow(dist, 2);
         *o_in = d / dist;
         *dist_to_light = dist;
         *pdf = dist2 / (area.area * fabs(cos_theta));
-        return cos_theta < 0 ? area.radiance : Vector3f::Zero();
+        return cos_theta < 0 ? area.radiance : Vector3f(0, 0, 0);
       }
       case POINT: {
         Vector3f d = point.position - hit_point;
-        *o_in = d.normalized();
+        *o_in = d.unit();
         *dist_to_light = d.norm();
         *pdf = 1;
         return point.radiance;
@@ -122,25 +122,25 @@ public:
 
 class SceneLightFactory {
 public:
-  static SceneLight create_area(const Array3f &radiance, const Vector3f &position, const Vector3f &direction,
+  static SceneLight create_area(const Vector3f &radiance, const Vector3f &position, const Vector3f &direction,
                                 const Vector3f &dim_x, const Vector3f &dim_y) {
     auto light = SceneLight();
     light.type = SceneLight::AREA;
-    light.area = {radiance, position, direction.normalized(), dim_x, dim_y, dim_x.norm() * dim_y.norm()};
+    light.area = {radiance, position, direction.unit(), dim_x, dim_y, dim_x.norm() * dim_y.norm()};
     return light;
   }
 
-  static SceneLight create_point(const Array3f &radiance, const Vector3f &position) {
+  static SceneLight create_point(const Vector3f &radiance, const Vector3f &position) {
     auto light = SceneLight();
     light.type = SceneLight::POINT;
     light.point = {radiance, position};
     return light;
   }
 
-  static SceneLight create_directional(const Array3f &radiance, const Vector3f &direction) {
+  static SceneLight create_directional(const Vector3f &radiance, const Vector3f &direction) {
     auto light = SceneLight();
     light.type = SceneLight::DIRECTIONAL;
-    light.directional = {radiance, (-direction).normalized()};
+    light.directional = {radiance, (-direction).unit()};
     return light;
   }
 };

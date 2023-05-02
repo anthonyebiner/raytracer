@@ -2,12 +2,10 @@
 
 #include <utility>
 
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/scene/bbox.cuh"
 #include "raytracer/scene/ray.cuh"
 #include "raytracer/scene/bsdf.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
 
 struct Primitive {
   enum {
@@ -87,7 +85,7 @@ struct Primitive {
         isect->primitive = this;
         isect->ray = ray;
         isect->t = ray->max_t;
-        isect->normal = ((ray->origin + ray->max_t * ray->direction) - sphere.origin).normalized();
+        isect->normal = ((ray->origin + ray->max_t * ray->direction) - sphere.origin).unit();
         return true;
       }
       case TRIANGLE: {
@@ -98,11 +96,11 @@ struct Primitive {
         Vector3f s2 = s.cross(e1);
 
         Vector3f c = Vector3f(s2.dot(e2), s1.dot(s), s2.dot(ray->direction)) / s1.dot(e1);
-        float t = c.x();
+        float t = c.x;
 
-        Vector3f b = {1 - c.y() - c.z(), c.y(), c.z()};
+        Vector3f b = {1 - c.y - c.z, c.y, c.z};
 
-        if (t < 0 || t <= ray->min_t || t > ray->max_t || b.x() < 0 || b.y() < 0 || b.z() < 0) {
+        if (t < 0 || t <= ray->min_t || t > ray->max_t || b.x < 0 || b.y < 0 || b.z < 0) {
           return false;
         }
         ray->max_t = t;
@@ -110,7 +108,7 @@ struct Primitive {
         isect->primitive = this;
         isect->ray = ray;
         isect->t = ray->max_t;
-        isect->normal = (b.x() * triangle.n1 + b.y() * triangle.n2 + b.z() * triangle.n3).normalized();
+        isect->normal = (b.x * triangle.n1 + b.y * triangle.n2 + b.z * triangle.n3).unit();
         return true;
       }
       case INVALID:

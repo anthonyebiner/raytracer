@@ -1,21 +1,20 @@
 #pragma once
 
+#include "raytracer/linalg/Matrix3f.cuh"
+#include "raytracer/linalg/Vector2f.cuh"
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/util/sampler.cuh"
-#include "Eigen/Dense"
 
-using Eigen::Array3f;
-using Eigen::Vector3f;
-using Eigen::Matrix3f;
 
 RAYTRACER_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
-  Vector3f z = {n.x(), n.y(), n.z()};
+  Vector3f z = {n.x, n.y, n.z};
   Vector3f h = z;
-  if (fabs(h.x()) <= fabs(h.y()) && fabs(h.x()) <= fabs(h.z()))
-    h.x() = 1.0;
-  else if (fabs(h.y()) <= fabs(h.x()) && fabs(h.y()) <= fabs(h.z()))
-    h.y() = 1.0;
+  if (fabs(h.x) <= fabs(h.y) && fabs(h.x) <= fabs(h.z))
+    h.x = 1.0;
+  else if (fabs(h.y) <= fabs(h.x) && fabs(h.y) <= fabs(h.z))
+    h.y = 1.0;
   else
-    h.z() = 1.0;
+    h.z = 1.0;
 
   z.normalize();
   Vector3f y = h.cross(z);
@@ -23,9 +22,9 @@ RAYTRACER_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
   Vector3f x = z.cross(y);
   x.normalize();
 
-  o2w.col(0) = x;
-  o2w.col(1) = y;
-  o2w.col(2) = z;
+  o2w[0] = x;
+  o2w[1] = y;
+  o2w[2] = z;
 }
 
 
@@ -44,30 +43,30 @@ public:
 
   union {
     struct {
-      Array3f reflectance;
+      Vector3f reflectance;
     } diffuse;
     struct {
-      Array3f radiance;
+      Vector3f radiance;
     } emission;
     struct {
       float roughness;
-      Array3f reflectance;
+      Vector3f reflectance;
     } reflection;
     struct {
       float ior, roughness;
-      Array3f transmittance;
+      Vector3f transmittance;
     } refraction;
     struct {
       float ior, roughness;
-      Array3f reflectance, transmittance;
+      Vector3f reflectance, transmittance;
     } glass;
     struct {
       float alpha;
-      Array3f eta, k;
+      Vector3f eta, k;
     } microfacet;
     struct {
       float shininess;
-      Array3f diffuse, specular;
+      Vector3f diffuse, specular;
     } phong;
   };
 
@@ -160,22 +159,22 @@ public:
     }
   }
 
-  RAYTRACER_DEVICE_FUNC Array3f f(const Vector3f &o_out, const Vector3f &o_in) {
+  RAYTRACER_DEVICE_FUNC Vector3f f(const Vector3f &o_out, const Vector3f &o_in) {
     switch (type) {
       case DIFFUSE: {
         return diffuse.reflectance / PI;
       }
       case MICROFACET: {
-        if (o_out.z() <= 0 || o_in.z() <= 0) {
+        if (o_out.z <= 0 || o_in.z <= 0) {
           return {0, 0, 0};
         }
-        Vector3f h = (o_out + o_in).normalized();
+        Vector3f h = (o_out + o_in).unit();
         return (fresnel(o_in, microfacet.eta, microfacet.k) * shadow_masking(o_out, o_in, microfacet.alpha) *
-                ndf(h, microfacet.alpha)) / (4 * o_out.z() * o_in.z());
+                ndf(h, microfacet.alpha)) / (4 * o_out.z * o_in.z);
       }
       case PHONG: {
-        Vector3f h = (o_out + o_in).normalized();
-        return (phong.specular * (phong.shininess + 2) * pow(h.z(), phong.shininess) / 2) / PI;
+        Vector3f h = (o_out + o_in).unit();
+        return (phong.specular * (phong.shininess + 2) * pow(h.z, phong.shininess) / 2) / PI;
       }
       default: {
         return {0, 0, 0};
@@ -184,13 +183,13 @@ public:
   }
 
   RAYTRACER_DEVICE_FUNC Vector3f
-  sample(const Vector3f &o_out, Array3f *mask, float *pdf, uint *seed) {
-    float cos_o_out = o_out.z();
+  sample(Vector3f o_out, Vector3f *mask, float *pdf, uint *seed) {
+    float cos_o_out = o_out.z;
     Vector3f o_in;
     switch (type) {
       case DIFFUSE: {
         o_in = Sampler3D::sample_cosine_weighted_hemisphere(seed);
-        *pdf = o_in.z() / PI;
+        *pdf = o_in.z / PI;
         *mask = f(o_out, o_in);
         return o_in;
       }
@@ -202,7 +201,7 @@ public:
       }
       case REFLECTION: {
         reflect(o_out, &o_in);
-        *pdf = o_in.z();
+        *pdf = o_in.z;
         *mask = reflection.reflectance;
         return o_in;
       }
@@ -213,27 +212,27 @@ public:
           return o_in;
         }
         float n = cos_o_out > 0 ? 1 / refraction.ior : refraction.ior;
-        *pdf = o_in.z();
+        *pdf = o_in.z;
         *mask = refraction.transmittance / powf(n, 2);
         return o_in;
       }
       case GLASS: {
         if (!refract(o_out, &o_in, glass.ior)) {
           reflect(o_out, &o_in);
-          *pdf = o_in.z();
+          *pdf = o_in.z;
           *mask = glass.reflectance;
           return o_in;
         } else {
           float r0 = pow((1 - glass.ior) / (1 + glass.ior), 2);
-          float r = r0 + (1 - r0) * pow(1 - abs(o_out.z()), 5);
+          float r = r0 + (1 - r0) * pow(1 - abs(o_out.z), 5);
           if (Sampler1D::coin_flip(seed, r)) {
             reflect(o_out, &o_in);
-            *pdf = r * o_in.z();
+            *pdf = r * o_in.z;
             *mask = r * glass.reflectance;
             return o_in;
           } else {
             float n = cos_o_out > 0 ? 1 / glass.ior : glass.ior;
-            *pdf = (1 - r) * o_in.z();
+            *pdf = (1 - r) * o_in.z;
             *mask = (1 - r) * glass.transmittance / pow(n, 2);
             return o_in;
           }
@@ -243,8 +242,8 @@ public:
         Vector2f r = Sampler2D::sample_grid(seed);
 
         float a2 = pow(microfacet.alpha, 2);
-        float t = atan(sqrt(-a2 * log(1 - r.x())));
-        float p = 2 * PI * r.y();
+        float t = atan(sqrt(-a2 * log(1 - r.x)));
+        float p = 2 * PI * r.y;
 
         Vector3f h = {sinf(t) * cosf(p), sinf(t) * sinf(p), cosf(t)};
         o_in = -o_out + 2 * o_out.dot(h) * h;
@@ -261,7 +260,7 @@ public:
         float c = Sampler1D::random(seed);
         if (c < cpdf) {
           o_in = Sampler3D::sample_cosine_weighted_hemisphere(seed);
-          *pdf = cpdf * o_in.z() / PI;
+          *pdf = cpdf * o_in.z / PI;
           *mask = phong.diffuse / PI;
           return o_in;
         } else {
@@ -286,11 +285,11 @@ public:
   }
 
   static RAYTRACER_DEVICE_FUNC float cos_theta(const Vector3f &w) {
-    return w.z();
+    return w.z;
   }
 
   static RAYTRACER_DEVICE_FUNC float acos_theta(const Vector3f &w) {
-    return acosf(fminf(fmaxf(w.z(), -1.0f + 1e-5f), 1.0f - 1e-5f));
+    return acosf(fminf(fmaxf(w.z, -1.0f + 1e-5f), 1.0f - 1e-5f));
   }
 
   static RAYTRACER_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {
@@ -309,33 +308,33 @@ public:
     return exp(-(pow(tan(t), 2) / a2)) / (PI * a2 * pow(cos(t), 4));
   }
 
-  static RAYTRACER_DEVICE_FUNC Array3f fresnel(const Vector3f &o_in, const Array3f &eta, const Array3f &k) {
+  static RAYTRACER_DEVICE_FUNC Vector3f fresnel(const Vector3f &o_in, const Vector3f &eta, const Vector3f &k) {
     float t = acos_theta(o_in);
-    Array3f a = eta * eta + k * k;
-    Array3f b = 2 * eta * cos(t);
+    Vector3f a = eta * eta + k * k;
+    Vector3f b = 2 * eta * cos(t);
     float c = pow(cos(t), 2);
-    Array3f rs = (a - b + c) / (a + b + c);
-    Array3f rp = (a * c - b + 1) / (a * c + b + 1);
+    Vector3f rs = (a - b + c) / (a + b + c);
+    Vector3f rp = (a * c - b + 1) / (a * c + b + 1);
     return (rs + rp) / 2;
   }
 
   static RAYTRACER_DEVICE_FUNC void reflect(const Vector3f &wo, Vector3f *wi) {
-    Vector3f out = {-wo.x(), -wo.y(), wo.z()};
+    Vector3f out = {-wo.x, -wo.y, wo.z};
     *wi = out;
   }
 
   static RAYTRACER_DEVICE_FUNC bool refract(const Vector3f &wo, Vector3f *wi, float ior) {
-    float n = wo.z() > 0 ? 1 / ior : ior;
+    float n = wo.z > 0 ? 1 / ior : ior;
     float n2 = powf(n, 2);
-    float z2 = powf(wo.z(), 2);
+    float z2 = powf(wo.z, 2);
 
     if (1 - n2 * (1 - z2) < 0) {
       return false;
     }
 
-    Vector3f out = {-n * wo.x(), -n * wo.y(), sqrt(1 - n2 * (1 - z2))};
-    if (wo.z() > 0) {
-      out.z() = -out.z();
+    Vector3f out = {-n * wo.x, -n * wo.y, sqrtf(1 - n2 * (1 - z2))};
+    if (wo.z > 0) {
+      out.z = -out.z;
     }
     *wi = out;
     return true;
@@ -345,28 +344,28 @@ public:
 
 class BSDFFactory {
 public:
-  static BSDF createDiffuse(const Array3f &reflectance) {
+  static BSDF createDiffuse(const Vector3f &reflectance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::DIFFUSE;
     bsdf.diffuse = {reflectance};
     return bsdf;
   }
 
-  static BSDF createEmission(const Array3f &radiance) {
+  static BSDF createEmission(const Vector3f &radiance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::EMISSION;
     bsdf.emission = {radiance};
     return bsdf;
   }
 
-  static BSDF createReflection(float roughness, const Array3f &reflectance) {
+  static BSDF createReflection(float roughness, const Vector3f &reflectance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::REFLECTION;
     bsdf.reflection = {roughness, reflectance};
     return bsdf;
   }
 
-  static BSDF createRefraction(float ior, float roughness, const Array3f &transmittance) {
+  static BSDF createRefraction(float ior, float roughness, const Vector3f &transmittance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::REFRACTION;
     bsdf.refraction = {ior, roughness, transmittance};
@@ -374,21 +373,21 @@ public:
   }
 
   static BSDF createGlass(float ior, float roughness,
-                          const Array3f &reflectance, const Array3f &transmittance) {
+                          const Vector3f &reflectance, const Vector3f &transmittance) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::GLASS;
     bsdf.glass = {ior, roughness, reflectance, transmittance};
     return bsdf;
   }
 
-  static BSDF createMicrofacet(float alpha, const Array3f &eta, const Array3f &k) {
+  static BSDF createMicrofacet(float alpha, const Vector3f &eta, const Vector3f &k) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::MICROFACET;
     bsdf.microfacet = {alpha, eta, k};
     return bsdf;
   }
 
-  static BSDF createPhong(float shininess, const Array3f &diffuse, const Array3f &specular) {
+  static BSDF createPhong(float shininess, const Vector3f &diffuse, const Vector3f &specular) {
     auto bsdf = BSDF();
     bsdf.type = BSDF::PHONG;
     bsdf.phong = {shininess, diffuse, specular};

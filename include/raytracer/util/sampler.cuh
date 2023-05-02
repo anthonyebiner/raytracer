@@ -1,11 +1,9 @@
 #pragma once
 
-#include "raytracer/util/misc.cuh"
 #include <random>
-#include "Eigen/Dense"
-
-using Eigen::Vector2f;
-using Eigen::Vector3f;
+#include "raytracer/linalg/Vector2f.cuh"
+#include "raytracer/linalg/Vector3f.cuh"
+#include "raytracer/util/misc.cuh"
 
 static inline RAYTRACER_DEVICE_FUNC float random_float(uint *state) {
   uint x = *state;

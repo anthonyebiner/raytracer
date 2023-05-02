@@ -1,10 +1,8 @@
 #pragma once
 
+#include "raytracer/linalg/Vector3f.cuh"
+#include "raytracer/linalg/Matrix3f.cuh"
 #include "raytracer/scene/ray.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
-using Eigen::Matrix3f;
 
 
 class Camera {
@@ -18,7 +16,7 @@ public:
   float aperture;
   float focal_distance;
 
-  Camera(const Vector3f &look_from, const Vector3f &look_at, const Vector3f &up,
+  Camera(const Vector3f &look_from, const Vector3f &look_at, Vector3f up,
          float vFov, float hFov, float nClip, float fClip, float aperture = 0, float focal_distance = 0) {
     this->nClip = nClip;
     this->fClip = fClip;
@@ -29,17 +27,17 @@ public:
     this->focal_distance = focal_distance;
 
     Vector3f dirToCamera = look_from - look_at;
-    Vector3f screenXDir = up.cross(dirToCamera).normalized();
-    Vector3f screenYDir = dirToCamera.cross(screenXDir).normalized();
+    Vector3f screenXDir = up.cross(dirToCamera).unit();
+    Vector3f screenYDir = dirToCamera.cross(screenXDir).unit();
 
-    c2w.col(0) = screenXDir;
-    c2w.col(1) = screenYDir;
-    c2w.col(2) = dirToCamera.normalized();
+    c2w[0] = screenXDir;
+    c2w[1] = screenYDir;
+    c2w[2] = dirToCamera.unit();
   }
 
   RAYTRACER_DEVICE_FUNC Ray generate_ray(float x, float y) const {
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
-    Ray world_ray = Ray(origin, (c2w * camera_vector).normalized());
+    Ray world_ray = Ray(origin, (c2w * camera_vector).unit());
     world_ray.min_t = nClip;
     world_ray.max_t = fClip;
     return world_ray;
@@ -51,7 +49,7 @@ public:
     Vector3f p_lens = {aperture * sqrtf(rndR) * cosf(rndTheta), aperture * sqrtf(rndR) * sinf(rndTheta), 0};
     Vector3f p_focus = camera_vector * focal_distance;
 
-    Ray focus_ray = Ray((c2w * p_lens) + origin, c2w * (p_focus - p_lens).normalized());
+    Ray focus_ray = Ray((c2w * p_lens) + origin, c2w * (p_focus - p_lens).unit());
     focus_ray.min_t = nClip;
     focus_ray.max_t = fClip;
 

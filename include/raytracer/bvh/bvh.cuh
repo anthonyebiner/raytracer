@@ -1,13 +1,13 @@
 #pragma once
 
 #include <utility>
-#include "raytracer/util/misc.cuh"
+#include <unordered_map>
+#include <algorithm>
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/scene/bbox.cuh"
 #include "raytracer/scene/bsdf.cuh"
 #include "raytracer/scene/primitives.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
+#include "raytracer/util/misc.cuh"
 
 struct BVHNodeOpt {
   Vector3f minp;
@@ -176,8 +176,7 @@ public:
       node->end = end;
       return node;
     } else {
-      int axis;
-      extent.maxCoeff(&axis);
+      int axis = int(std::distance(&extent[0], std::max_element(&extent[0], &extent[3])));
 
       Vector3f center = {0, 0, 0};
       for (auto p = start; p != end; p++) {

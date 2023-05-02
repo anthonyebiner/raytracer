@@ -1,6 +1,6 @@
 #include "fmt/core.h"
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/renderer.cuh"
-#include "rapidobj/rapidobj.hpp"
 #include "geometry/generator.cuh"
 
 using fmt::print;
@@ -32,9 +32,9 @@ int main() {
       SceneLightFactory::create_area({15, 15, 15}, {0, 149, 0}, {0, -1, 0}, {80, 0, 0}, {0, 0, 60}));
 
   pathtracer.set_scene(primitives, lights);
-  pathtracer.resize(520, 416);
+  pathtracer.resize(1280, 1024);
 
-  pathtracer.set_camera({0, 75, -400}, {0, 75, 0}, {0, 1, 0}, 36.75, 49, 0, INF_F, 0, 0);
+  pathtracer.set_camera({0, 75, -360}, {0, 75, 0}, {0, 1, 0}, 36.75, 49, 0, INF_F, 0, 0);
 
   pathtracer.raytrace();
   pathtracer.save_to_file("test1.bmp");

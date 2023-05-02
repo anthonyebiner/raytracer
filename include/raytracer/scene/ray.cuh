@@ -1,12 +1,9 @@
 #pragma once
 
 #include <utility>
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/util/misc.cuh"
 #include "raytracer/scene/bsdf.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
-using Eigen::Matrix3f;
 
 
 struct Ray {
@@ -20,12 +17,12 @@ struct Ray {
   RAYTRACER_DEVICE_FUNC Ray() {};
 
   RAYTRACER_DEVICE_FUNC Ray(const Vector3f &origin, const Vector3f &direction)
-      : origin(origin), direction(direction.normalized()), min_t(EPS_F), max_t(INF_F),
-        inv_d(direction.cwiseInverse()) {}
+      : origin(origin), direction(direction.unit()), min_t(EPS_F), max_t(INF_F),
+        inv_d(direction.rcp()) {}
 
   RAYTRACER_DEVICE_FUNC Ray(const Vector3f &origin, const Vector3f &direction, float max_t)
-      : origin(origin), direction(direction.normalized()), min_t(EPS_F), max_t(max_t),
-        inv_d(direction.cwiseInverse()) {}
+      : origin(origin), direction(direction.unit()), min_t(EPS_F), max_t(max_t),
+        inv_d(direction.rcp()) {}
 };
 
 
@@ -44,11 +41,11 @@ struct Intersection {
   Vector3f o_out;
 
   RAYTRACER_DEVICE_FUNC void compute() {
-    normal = normal.normalized();
+    normal = normal.unit();
     make_coord_space(o2w, normal);
-    w2o = o2w.transpose();
+    w2o = o2w.T();
 
     hit_point = ray->origin + ray->direction * t;
-    o_out = (w2o * (-ray->direction)).normalized();
+    o_out = (w2o * (-ray->direction)).unit();
   }
 };

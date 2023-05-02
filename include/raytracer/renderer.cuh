@@ -5,12 +5,12 @@
 #include <condition_variable>
 #include "raytracer/scene/camera.cuh"
 #include "raytracer/util/image.cuh"
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/util/sampler.cuh"
 #include "raytracer/bvh/bvh.cuh"
 #include "raytracer/util/misc.cuh"
 #include "raytracer/scene/lights.cuh"
 #include "raytracer/raytracer.cuh"
-#include "Eigen/Dense"
 #include "fmt/core.h"
 #include "raytracer/util/bitmap_image.cuh"
 
@@ -18,23 +18,20 @@
 
 
 using fmt::print;
-using Eigen::Vector2f;
-using Eigen::Vector3f;
-using Eigen::Array3f;
-using Eigen::Array3d;
 using std::shared_ptr;
 
 
 void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
   for (uint y = 0; y < buffer->h; y++) {
-    for (uint x = 0; x < buffer->w; x++) {
+    uint x;
+    for (x = 0; x < buffer->w; x++) {
       uint seed = y * buffer->w + x;
       Sampler3D::sample_grid(&seed);
       fill_color(x, y, scene, parameters, buffer, &seed);
-#if USE_PROGRESS
-      print_progress((float) (x + y * buffer->w) / (float) (buffer->w * buffer->h));
-#endif
     }
+#if USE_PROGRESS
+    print_progress((float) (x + y * buffer->w) / (float) (buffer->w * buffer->h));
+#endif
   }
 }
 
@@ -120,7 +117,7 @@ public:
     for (uint x = 0; x < sample_buffer->w; x++) {
       for (uint y = 0; y < sample_buffer->h; y++) {
         Vector3i color = sample_buffer->data[y * sample_buffer->w + x];
-        image.set_pixel(x, y, color.x(), color.y(), color.z());
+        image.set_pixel(x, y, color.x, color.y, color.z);
       }
     }
     image.save_image(filename);

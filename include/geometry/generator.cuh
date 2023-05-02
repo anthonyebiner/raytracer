@@ -1,11 +1,9 @@
 #pragma once
 
 #include "rapidobj/rapidobj.hpp"
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/scene/primitives.cuh"
 #include "raytracer/scene/bsdf.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
 
 
 struct Generator {
@@ -131,13 +129,13 @@ struct Generator {
             } else if (material.illum == 3) {
               new_bsdf = &mirror_bsdf;
             } else if (material.illum == 4) {
-              Array3f transmittance = {material.transmittance[0], material.transmittance[1],
-                                       material.transmittance[2]};
+              Vector3f transmittance = {material.transmittance[0], material.transmittance[1],
+                                        material.transmittance[2]};
               new_bsdf = new BSDF(
                   BSDFFactory::createGlass(material.ior, 0, transmittance, transmittance));
             } else {
-              Array3f diffuse = {material.diffuse[0], material.diffuse[1], material.diffuse[2]};
-              Array3f specular = {material.specular[0], material.specular[1], material.specular[2]};
+              Vector3f diffuse = {material.diffuse[0], material.diffuse[1], material.diffuse[2]};
+              Vector3f specular = {material.specular[0], material.specular[1], material.specular[2]};
 
               new_bsdf = new BSDF(
                   BSDFFactory::createPhong(material.shininess, diffuse, specular));
@@ -162,7 +160,7 @@ struct Generator {
               result.attributes.normals[index.normal_index * 3 + 1],
               result.attributes.normals[index.normal_index * 3 + 2]
           };
-          vertices[j] = Vector3f(vertices[j].array() * scale.array());
+          vertices[j] = vertices[j] * scale;
           vertices[j] += translate;
         }
 

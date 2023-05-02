@@ -1,12 +1,8 @@
 #pragma once
 
-#include "raytracer/util/misc.cuh"
+#include "raytracer/linalg/Vector3f.cuh"
 #include "raytracer/scene/ray.cuh"
-#include "Eigen/Dense"
-
-using Eigen::Vector3f;
-using std::min;
-using std::max;
+#include "raytracer/util/misc.cuh"
 
 class BBox {
 public:
@@ -30,22 +26,22 @@ public:
   }
 
   void expand(const BBox &bbox) {
-    minp.x() = min(minp.x(), bbox.minp.x());
-    minp.y() = min(minp.y(), bbox.minp.y());
-    minp.z() = min(minp.z(), bbox.minp.z());
-    maxp.x() = max(maxp.x(), bbox.maxp.x());
-    maxp.y() = max(maxp.y(), bbox.maxp.y());
-    maxp.z() = max(maxp.z(), bbox.maxp.z());
+    minp.x = fminf(minp.x, bbox.minp.x);
+    minp.y = fminf(minp.y, bbox.minp.y);
+    minp.z = fminf(minp.z, bbox.minp.z);
+    maxp.x = fmaxf(maxp.x, bbox.maxp.x);
+    maxp.y = fmaxf(maxp.y, bbox.maxp.y);
+    maxp.z = fmaxf(maxp.z, bbox.maxp.z);
     extent = maxp - minp;
   }
 
   void expand(const Vector3f &p) {
-    minp.x() = min(minp.x(), p.x());
-    minp.y() = min(minp.y(), p.y());
-    minp.z() = min(minp.z(), p.z());
-    maxp.x() = max(maxp.x(), p.x());
-    maxp.y() = max(maxp.y(), p.y());
-    maxp.z() = max(maxp.z(), p.z());
+    minp.x = fminf(minp.x, p.x);
+    minp.y = fminf(minp.y, p.y);
+    minp.z = fminf(minp.z, p.z);
+    maxp.x = fmaxf(maxp.x, p.x);
+    maxp.y = fmaxf(maxp.y, p.y);
+    maxp.z = fmaxf(maxp.z, p.z);
     extent = maxp - minp;
   }
 
@@ -55,13 +51,13 @@ public:
 
   float surface_area() const {
     if (empty()) return 0.0;
-    return 2 * (extent.x() * extent.z() +
-                extent.x() * extent.y() +
-                extent.y() * extent.z());
+    return 2 * (extent.x * extent.z +
+                extent.x * extent.y +
+                extent.y * extent.z);
   }
 
   bool empty() const {
-    return minp.x() > maxp.x() || minp.y() > maxp.y() || minp.z() > maxp.z();
+    return minp.x > maxp.x || minp.y > maxp.y || minp.z > maxp.z;
   }
 
   bool intersect(const Ray &ray) const {
@@ -75,8 +71,8 @@ public:
       float t1 = (minp[d] - ray.origin[d]) * ray.inv_d[d];
       float t2 = (maxp[d] - ray.origin[d]) * ray.inv_d[d];
 
-      tmin = min(max(t1, tmin), max(t2, tmin));
-      tmax = max(min(t1, tmax), min(t2, tmax));
+      tmin = fminf(fmaxf(t1, tmin), fmaxf(t2, tmin));
+      tmax = fmaxf(fminf(t1, tmax), fminf(t2, tmax));
     }
 
     return tmin <= tmax && tmax > ray.min_t;

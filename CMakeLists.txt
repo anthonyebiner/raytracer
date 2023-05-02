@@ -3,7 +3,15 @@ project(
         Raytracer
         VERSION 0.0.1
         DESCRIPTION "A simple CUDA raytracer"
-        LANGUAGES CUDA CXX)
+)
+
+include(CheckLanguage)
+check_language(CUDA)
+if (CMAKE_CUDA_COMPILER)
+    enable_language(CUDA CXX)
+else ()
+    enable_language(CXX)
+endif ()
 
 set(CMAKE_CUDA_STANDARD 17)
 

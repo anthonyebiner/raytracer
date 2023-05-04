@@ -1,5 +1,5 @@
 #include "fmt/core.h"
-#include "raytracer/linalg/Vector3f.cuh"
+#include "physics/physics.cuh"
 #include "raytracer/renderer.cuh"
 #include "geometry/generator.cuh"
 
@@ -8,32 +8,31 @@ using fmt::print;
 int main() {
   printf("Starting program\n");
 
-  PathTracer pathtracer = PathTracer({100, 4, 64, 0.05f, 40, 4});
+  std::vector<SceneLight> lights;
+  lights.push_back(SceneLightFactory::create_directional({.2, .2, .2}, {0, -1, 0}));
+
 
   std::vector<Primitive *> primitives;
-  Generator::room(&primitives, 2, 1.5, 2,
-                  &white_bsdf, &white_bsdf, &red_bsdf, &blue_bsdf, nullptr, &white_bsdf);
+  PhysicsSystem physics = PhysicsSystem(500000, {0, 0, 0}, {0, 1, 0}, 250);
 
-//  Generator::from_obj(&primitives, "../objects/hairball.obj", &white_bsdf, {0.12, 0.12, 0.12}, {0, .5, 0});
+  for (uint i = 0; i < 80; i++) {
+    physics.step(.075);
+    physics.to_primitives(&primitives);
+    Generator::room(&primitives, 10000, 0, 10000, &white_bsdf, nullptr, nullptr,
+                    nullptr, nullptr, nullptr);
 
-  BSDF white_light_bsdf = BSDFFactory::createEmission({8, 8, 8});
-  primitives.push_back(new Primitive(
-      PrimitiveFactory::createTriangle(Vector3f(-.3, 1.49, -.3), Vector3f(.3, 1.49, -.3), Vector3f(.3, 1.49, .3),
-                                       Vector3f(0, -1, 0), Vector3f(0, -1, 0), Vector3f(0, -1, 0), &white_light_bsdf)));
-  primitives.push_back(new Primitive(
-      PrimitiveFactory::createTriangle(Vector3f(-.3, 1.49, -.3), Vector3f(-.3, 1.49, .3), Vector3f(.3, 1.49, .3),
-                                       Vector3f(0, -1, 0), Vector3f(0, -1, 0), Vector3f(0, -1, 0), &white_light_bsdf)));
+    PathTracer pathtracer = PathTracer({100, 1, 64, 0.05f, 8, 4});
+    pathtracer.set_camera({0, 175, -300}, {0, 20, 0}, {0, 1, 0}, 42, 42 * 600 / 800, 0, INF_F, 0, 0);
+    pathtracer.resize(800, 600);
+    pathtracer.set_scene(primitives, lights);
 
-  print("{} primitives\n", primitives.size());
+    pathtracer.raytrace();
+    pathtracer.save_to_file("sim" + std::to_string(i) + ".bmp");
 
-  std::vector<SceneLight> lights;
-  lights.push_back(SceneLightFactory::create_area({16, 16, 16}, {0, 1.49, 0}, {0, -1, 0}, {.6, 0, 0}, {0, 0, .6}));
-
-  pathtracer.set_scene(primitives, lights);
-  pathtracer.resize(1920, 1080);
-
-  pathtracer.set_camera({-.75, 1.1, -2.75}, {0, .5, 0}, {0, 1, 0}, 42, 42 * 1024 / 1980, 0, INF_F, 0, 0);
-
-  pathtracer.raytrace();
-  pathtracer.save_to_file("test3.bmp");
+    for (const auto &item: primitives) {
+      if (item->type != Primitive::TRIANGLE)
+        delete item->bsdf;
+    }
+    primitives.clear();
+  }
 }

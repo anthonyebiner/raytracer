@@ -39,18 +39,11 @@ void raytrace_cpu(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
 
 #ifdef __CUDACC__
 
-__global__ void raytrace_cuda(Scene *scene, Parameters *parameters,
-                              SampleBuffer *buffer, volatile int *progress) {
+__global__ void raytrace_cuda(Scene *scene, Parameters *parameters, SampleBuffer *buffer) {
   uint x = threadIdx.x + blockIdx.x * blockDim.x;
   uint y = threadIdx.y + blockIdx.y * blockDim.y;
 
   if ((x >= buffer->w) || (y >= buffer->h)) {
-#if USE_PROGRESS
-    if (!(threadIdx.x || threadIdx.y)) {
-      atomicAdd((int *) progress, 1);
-      __threadfence_system();
-    }
-#endif
     return;
   }
 
@@ -58,13 +51,6 @@ __global__ void raytrace_cuda(Scene *scene, Parameters *parameters,
   for (uint _ = 0; _ < 10; _++) random_float(&seed);
 
   fill_color(x, y, scene, parameters, buffer, &seed);
-
-#if USE_PROGRESS
-  if (!(threadIdx.x || threadIdx.y)) {
-    atomicAdd((int *) progress, 1);
-    __threadfence_system();
-  }
-#endif
 }
 
 #endif
@@ -187,42 +173,11 @@ public:
     dim3 blocks(sample_buffer->w / 16 + 1, sample_buffer->h / 16 + 1);
     dim3 threads(16, 16);
 
-    volatile int *d_progress, *h_progress;
-    cudaSetDeviceFlags(cudaDeviceMapHost);
-    cudaCheckErrors("cudaSetDeviceFlags error");
-    cudaHostAlloc((void **) &h_progress, sizeof(int), cudaHostAllocMapped);
-    cudaCheckErrors("cudaHostAlloc error");
-    cudaHostGetDevicePointer((int **) &d_progress, (int *) h_progress, 0);
-    cudaCheckErrors("cudaHostGetDevicePointer error");
-    *h_progress = 0;
-
-    cudaEvent_t start, stop;
-    cudaEventCreate(&start);
-    cudaEventCreate(&stop);
-
     print("Raytracing Pixels\n");
-    cudaEventRecord(start);
-    raytrace_cuda<<<blocks, threads>>>(d_scene, d_parameters, d_buf, d_progress);
-    cudaEventRecord(stop);
-#if USE_PROGRESS
-    uint num_blocks = blocks.x * blocks.y;
-    float percentage;
-    do {
-      percentage = (float) *h_progress / (float) num_blocks;
-      print_progress(percentage);
-    } while (percentage < 0.98f);
-    print_progress(1.0);
-    printf("\n");
-#endif
-    cudaEventSynchronize(stop);
-    cudaCheckErrors("cudaEventSynchronize error");
-    float et;
-    cudaEventElapsedTime(&et, start, stop);
-    cudaCheckErrors("cudaEventElapsedTime error");
+    raytrace_cuda<<<blocks, threads>>>(d_scene, d_parameters, d_buf);
     cudaDeviceSynchronize();
     cudaCheckErrors("raytrace_kernel error");
 
-    print("Pixels Raytraced. Elapsed time = {} ms\n", et);
 
     sample_buffer->from_cuda(d_buf);
     print("Sample buffer loaded from CUDA\n");

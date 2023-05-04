@@ -62,9 +62,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
     if (!scene->bvh->intersect(ray, &isect)) break;
     isect.compute();
 
-    if ((i == 0 || prev_isect.primitive->bsdf->is_delta()) && isect.primitive->bsdf->type == BSDF::EMISSION) {
-      total_color += color_mask * isect.primitive->bsdf->get_emission();
-    }
+    total_color += color_mask * isect.primitive->bsdf->get_emission();
 
     if (!isect.primitive->bsdf->is_delta()) {
       total_color += color_mask * estimate_direct_lighting(scene, parameters, isect, seed);

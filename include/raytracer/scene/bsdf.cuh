@@ -37,6 +37,7 @@ public:
     REFRACTION,
     GLASS,
     MICROFACET,
+    TEXTURE,
     INVALID,
   } type;
 

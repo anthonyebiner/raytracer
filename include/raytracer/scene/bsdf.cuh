@@ -9,9 +9,9 @@
 RAYTRACER_DEVICE_FUNC void make_coord_space(Matrix3f &o2w, const Vector3f &n) {
   Vector3f z = {n.x, n.y, n.z};
   Vector3f h = z;
-  if (fabs(h.x) <= fabs(h.y) && fabs(h.x) <= fabs(h.z))
+  if (fabsf(h.x) <= fabsf(h.y) && fabsf(h.x) <= fabsf(h.z))
     h.x = 1.0;
-  else if (fabs(h.y) <= fabs(h.x) && fabs(h.y) <= fabs(h.z))
+  else if (fabsf(h.y) <= fabsf(h.x) && fabsf(h.y) <= fabsf(h.z))
     h.y = 1.0;
   else
     h.z = 1.0;
@@ -37,7 +37,6 @@ public:
     REFRACTION,
     GLASS,
     MICROFACET,
-    PHONG,
     INVALID,
   } type;
 
@@ -64,10 +63,6 @@ public:
       float alpha;
       Vector3f eta, k;
     } microfacet;
-    struct {
-      float shininess;
-      Vector3f diffuse, specular;
-    } phong;
   };
 
   explicit BSDF() : type(INVALID) {}
@@ -92,9 +87,6 @@ public:
       }
       case MICROFACET: {
         microfacet = b.microfacet;
-      }
-      case PHONG: {
-        phong = b.phong;
       }
       case INVALID:
         break;
@@ -121,9 +113,6 @@ public:
       }
       case MICROFACET: {
         microfacet = b.microfacet;
-      }
-      case PHONG: {
-        phong = b.phong;
       }
       case INVALID:
         break;
@@ -171,10 +160,6 @@ public:
         Vector3f h = (o_out + o_in).unit();
         return (fresnel(o_in, microfacet.eta, microfacet.k) * shadow_masking(o_out, o_in, microfacet.alpha) *
                 ndf(h, microfacet.alpha)) / (4 * o_out.z * o_in.z);
-      }
-      case PHONG: {
-        Vector3f h = (o_out + o_in).unit();
-        return (phong.specular * (phong.shininess + 2) * pow(h.z, phong.shininess) / 2) / PI;
       }
       default: {
         return {0, 0, 0};
@@ -255,26 +240,6 @@ public:
         *mask = f(o_out, o_in);
         return o_in;
       }
-      case PHONG: {
-        float cpdf = 0;
-        float c = Sampler1D::random(seed);
-        if (c < cpdf) {
-          o_in = Sampler3D::sample_cosine_weighted_hemisphere(seed);
-          *pdf = cpdf * o_in.z / PI;
-          *mask = phong.diffuse / PI;
-          return o_in;
-        } else {
-          Vector2f r = Sampler2D::sample_grid(seed);
-
-          float a = acosf(pow(r[0], 1 / (phong.shininess + 1)));
-          float t = a + acos(o_out[2]);
-          float p = 2 * PI * r[1] + atan(o_out[1] / o_out[0]);
-
-          *pdf = (1 - cpdf) * (phong.shininess + 2) / (2 * PI) * pow(cos(a), phong.shininess);
-          *mask = phong.specular * (phong.shininess + 2) * pow(cos(a), phong.shininess) / (2 * PI);
-          return {sinf(t) * cosf(p), sinf(t) * sinf(p), cosf(t)};
-        }
-      }
       case INVALID: {
         *pdf = 0;
         *mask = {0, 0, 0};
@@ -289,7 +254,7 @@ public:
   }
 
   static RAYTRACER_DEVICE_FUNC float acos_theta(const Vector3f &w) {
-    return acosf(fminf(fmaxf(w.z, -1.0f + 1e-5f), 1.0f - 1e-5f));
+    return acosf(minf(maxf(w.z, -1.0f + 1e-5f), 1.0f - 1e-5f));
   }
 
   static RAYTRACER_DEVICE_FUNC float lambda(const Vector3f &w, float alpha) {
@@ -387,20 +352,33 @@ public:
     return bsdf;
   }
 
-  static BSDF createPhong(float shininess, const Vector3f &diffuse, const Vector3f &specular) {
-    auto bsdf = BSDF();
-    bsdf.type = BSDF::PHONG;
-    bsdf.phong = {shininess, diffuse, specular};
-    return bsdf;
-  }
 };
 
-static BSDF mirror_bsdf = BSDFFactory::createReflection(0.f, {1, 1, 1});
+static BSDF mirror_bsdf = BSDFFactory::createReflection(0.f, {.9, .9, .9});
 static BSDF refract_bsdf = BSDFFactory::createRefraction(1.45f, 0.f, {1, 1, 1});
 static BSDF glass_bsdf = BSDFFactory::createGlass(1.45f, 0.f, {1, 1, 1}, {1, 1, 1});
-static BSDF gold_bsdf = BSDFFactory::createMicrofacet(0.3, {0.21646, 0.42833, 1.3284}, {3.2390, 2.4599, 1.8661});
-static BSDF copper_bsdf = BSDFFactory::createMicrofacet(0.05, {0.33228, 1.0162, 1.2474}, {3.1646, 2.5785, 2.4603});
-static BSDF iron_bsdf = BSDFFactory::createMicrofacet(0.3, {2.8851, 2.9500, 2.6500}, {3.2419, 2.9300, 2.8075});
+
+static BSDF aluminum_bsdf = BSDFFactory::createMicrofacet(0.5, {1.34560, 0.96521, 0.61722},
+                                                          {7.47460, 6.39950, 5.30310});
+static BSDF brass_bsdf = BSDFFactory::createMicrofacet(0.5, {0.44400, 0.52700, 1.09400},
+                                                       {3.69500, 2.76500, 1.82900});
+static BSDF copper_bsdf = BSDFFactory::createMicrofacet(0.5, {0.27105, 0.67693, 1.31640},
+                                                        {3.60920, 2.62480, 2.29210});
+static BSDF gold_bsdf = BSDFFactory::createMicrofacet(0.05, {0.18299, 0.42108, 1.37340},
+                                                      {3.42420, 2.34590, 1.77040});
+static BSDF iron_bsdf = BSDFFactory::createMicrofacet(0.5, {2.91140, 2.94970, 2.58450},
+                                                      {3.08930, 2.93180, 2.76700});
+static BSDF lead_bsdf = BSDFFactory::createMicrofacet(0.5, {1.91000, 1.83000, 1.44000},
+                                                      {3.51000, 3.40000, 3.18000});
+static BSDF mercury_bsdf = BSDFFactory::createMicrofacet(0.5, {2.07330, 1.55230, 1.06060},
+                                                         {5.33830, 4.65100, 3.86280});
+static BSDF platinum_bsdf = BSDFFactory::createMicrofacet(0.5, {2.37570, 2.08470, 1.84530},
+                                                          {4.26550, 3.71530, 3.13650});
+static BSDF silver_bsdf = BSDFFactory::createMicrofacet(0.5, {0.15943, 0.14512, 0.13547},
+                                                        {3.92910, 3.19000, 2.38080});
+static BSDF titanium_bsdf = BSDFFactory::createMicrofacet(0.5, {2.74070, 2.54180, 2.26700},
+                                                          {3.81430, 3.43450, 3.03850});
+static BSDF blue_metal_bsdf = BSDFFactory::createMicrofacet(0.5, {2.5, .2, .05}, {0.5, 0.5, 0.5});
 
 static BSDF black_bsdf = BSDFFactory::createDiffuse({0, 0, 0});
 static BSDF white_bsdf = BSDFFactory::createDiffuse({.6, .6, .6});

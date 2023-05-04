@@ -26,22 +26,22 @@ public:
   }
 
   void expand(const BBox &bbox) {
-    minp.x = fminf(minp.x, bbox.minp.x);
-    minp.y = fminf(minp.y, bbox.minp.y);
-    minp.z = fminf(minp.z, bbox.minp.z);
-    maxp.x = fmaxf(maxp.x, bbox.maxp.x);
-    maxp.y = fmaxf(maxp.y, bbox.maxp.y);
-    maxp.z = fmaxf(maxp.z, bbox.maxp.z);
+    minp.x = minf(minp.x, bbox.minp.x);
+    minp.y = minf(minp.y, bbox.minp.y);
+    minp.z = minf(minp.z, bbox.minp.z);
+    maxp.x = maxf(maxp.x, bbox.maxp.x);
+    maxp.y = maxf(maxp.y, bbox.maxp.y);
+    maxp.z = maxf(maxp.z, bbox.maxp.z);
     extent = maxp - minp;
   }
 
   void expand(const Vector3f &p) {
-    minp.x = fminf(minp.x, p.x);
-    minp.y = fminf(minp.y, p.y);
-    minp.z = fminf(minp.z, p.z);
-    maxp.x = fmaxf(maxp.x, p.x);
-    maxp.y = fmaxf(maxp.y, p.y);
-    maxp.z = fmaxf(maxp.z, p.z);
+    minp.x = minf(minp.x, p.x);
+    minp.y = minf(minp.y, p.y);
+    minp.z = minf(minp.z, p.z);
+    maxp.x = maxf(maxp.x, p.x);
+    maxp.y = maxf(maxp.y, p.y);
+    maxp.z = maxf(maxp.z, p.z);
     extent = maxp - minp;
   }
 
@@ -71,8 +71,8 @@ public:
       float t1 = (minp[d] - ray.origin[d]) * ray.inv_d[d];
       float t2 = (maxp[d] - ray.origin[d]) * ray.inv_d[d];
 
-      tmin = fminf(fmaxf(t1, tmin), fmaxf(t2, tmin));
-      tmax = fmaxf(fminf(t1, tmax), fminf(t2, tmax));
+      tmin = minf(maxf(t1, tmin), maxf(t2, tmin));
+      tmax = maxf(minf(t1, tmax), minf(t2, tmax));
     }
 
     return tmin <= tmax && tmax > ray.min_t;

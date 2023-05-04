@@ -29,9 +29,8 @@ struct Ray {
 struct Primitive;
 
 struct Intersection {
-  Primitive *primitive;
-  Ray ray;
-  float t;
+  const Primitive *primitive;
+  const Ray *ray;
   Vector3f normal;
 
   Matrix3f o2w;
@@ -45,7 +44,7 @@ struct Intersection {
     make_coord_space(o2w, normal);
     w2o = o2w.T();
 
-    hit_point = ray.origin + ray.direction * t;
-    o_out = (w2o * (-ray.direction)).unit();
+    hit_point = ray->origin + ray->direction * ray->max_t;
+    o_out = (w2o * (-ray->direction)).unit();
   }
 };

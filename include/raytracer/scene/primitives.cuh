@@ -130,9 +130,8 @@ struct Primitive {
         }
 
         isect->primitive = this;
-        isect->ray = ray;
-        isect->t = ray.max_t;
-        isect->normal = ((ray.origin + ray.max_t * ray.direction) - sphere.origin).unit();
+        isect->ray = &ray;
+        isect->normal = (ray.origin + ray.max_t * ray.direction) - sphere.origin;
         return true;
       }
       case TRIANGLE: {
@@ -153,9 +152,8 @@ struct Primitive {
         ray.max_t = t;
 
         isect->primitive = this;
-        isect->ray = ray;
-        isect->t = ray.max_t;
-        isect->normal = (b.x * triangle.n1 + b.y * triangle.n2 + b.z * triangle.n3).unit();
+        isect->ray = &ray;
+        isect->normal = b.x * triangle.n1 + b.y * triangle.n2 + b.z * triangle.n3;
         return true;
       }
       case INVALID:

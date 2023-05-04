@@ -41,9 +41,9 @@ public:
     float one_over_gamma = 1.0f / gamma;
     float exposure = sqrt(pow(2, level));
     data[x + y * w] = Vector3i(
-        255 * fmaxf(0.f, fminf(1.f, pow(c.r * exposure, one_over_gamma))),
-        255 * fmaxf(0.f, fminf(1.f, pow(c.g * exposure, one_over_gamma))),
-        255 * fmaxf(0.f, fminf(1.f, pow(c.b * exposure, one_over_gamma)))
+        255 * maxf(0.f, minf(1.f, powf(c.r * exposure, one_over_gamma))),
+        255 * maxf(0.f, minf(1.f, powf(c.g * exposure, one_over_gamma))),
+        255 * maxf(0.f, minf(1.f, powf(c.b * exposure, one_over_gamma)))
     );
   }
 

@@ -21,6 +21,14 @@
 #define PBSTR "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||"
 #define PBWIDTH 60
 
+#ifdef __CUDACC__
+#define maxf fmaxf
+#define minf fminf
+#else
+#define maxf std::max
+#define minf std::min
+#endif
+
 
 #define cudaCheckErrors(msg) \
     do { \
@@ -47,7 +55,7 @@ RAYTRACER_DEVICE_FUNC inline T degrees(T rad) {
 
 template<typename T>
 RAYTRACER_DEVICE_FUNC inline T clamp(T x, T lo, T hi) {
-  return std::min(std::max(x, lo), hi);
+  return minf(maxf(x, lo), hi);
 }
 
 void print_progress(double percentage) {

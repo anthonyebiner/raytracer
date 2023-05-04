@@ -42,7 +42,7 @@ estimate_direct_lighting(Scene *scene, Parameters *parameters, const Intersectio
       Ray shadow_ray = Ray(isect.hit_point + bump, to_light, distanceToLight - EPS_F);
       if (!scene->bvh->has_intersection(shadow_ray)) {
         Vector3f f = isect.primitive->bsdf->f(isect.o_out, isect.w2o * to_light);
-        float cos = fmaxf(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
+        float cos = maxf(isect.normal.dot(shadow_ray.direction.unit()), 0.f);
         color += f * L * cos / pdf / parameters->samples_per_light;
       }
     }
@@ -70,7 +70,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
       total_color += color_mask * estimate_direct_lighting(scene, parameters, isect, seed);
     }
 
-    float cpdf = fmaxf(color_mask[0], fmaxf(color_mask[1], color_mask[2]));
+    float cpdf = maxf(color_mask[0], maxf(color_mask[1], color_mask[2]));
     if (!Sampler1D::coin_flip(seed, cpdf)) {
       break;
     }
@@ -84,7 +84,7 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
     bump = o_in.z > 0 ? bump : -bump;
     ray = Ray(isect.hit_point + bump, isect.o2w * o_in);
 
-    color_mask = color_mask * mask * o_in.z / pdf / fminf(cpdf, 1.f);
+    color_mask = color_mask * mask * o_in.z / pdf / minf(cpdf, 1.f);
 
     prev_isect = isect;
   }
@@ -93,37 +93,36 @@ estimate_global_lighting(Ray &ray, Scene *scene, Parameters *parameters, uint *s
 
 
 static RAYTRACER_DEVICE_FUNC void
-fill_color(uint x, uint y, Scene *scene, Parameters *parameters, SampleBuffer *buffer, uint *seed) {
-  Vector2f origin = Vector2f(x, y);
+fill_color(int x, int y, Scene *scene, Parameters *parameters, SampleBuffer *buffer, uint *seed) {
+  Vector2f origin = {float(x), float(y)};
   Vector3f color = {0, 0, 0};
-  uint samples_taken = 1;
-  float summed_color = 0;
-  float summed_color_squared = 0;
-  while (samples_taken <= parameters->samples_per_pixel) {
+  int i = 1;
+  float s1 = 0;
+  float s2 = 0;
+  while (i <= parameters->samples_per_pixel) {
     auto point = (origin + Sampler2D::sample_grid(seed));
     Ray ray;
     if (scene->camera->aperture < EPS_F) {
       ray = scene->camera->generate_ray(point.x / buffer->w, point.y / buffer->h);
     } else {
-      auto rand = Sampler2D::sample_grid(seed);
-      ray = scene->camera->generate_ray_for_thin_lens(point.x / buffer->w, point.y / buffer->h, rand[0],
-                                                      rand[1] * 2.0 * PI);
+      ray = scene->camera->generate_ray_for_thin_lens(point.x / buffer->w, point.y / buffer->h, seed);
     }
 
     Vector3f sample_color = estimate_global_lighting(ray, scene, parameters, seed);
 
     color += sample_color;
-    summed_color += sample_color.illum();
-    summed_color_squared += summed_color * summed_color;
-    if (samples_taken % parameters->samples_per_batch == 0) {
-      float variance = (summed_color_squared - pow(summed_color, 2) / samples_taken) / (samples_taken - 1);
-      float mean = summed_color / samples_taken;
-      if (1.96 * pow(variance / samples_taken, 0.5) <= parameters->max_tolerance * mean) {
+    float illum = sample_color.illum();
+    s1 += illum;
+    s2 += powf(illum, 2);
+    if (i % parameters->samples_per_batch == 0) {
+      float variance = (s1 - pow(s1, 2) / i) / (i - 1);
+      float mean = s1 / i;
+      if (1.96 * sqrtf(variance / i) <= parameters->max_tolerance * mean) {
         break;
       }
     }
-    samples_taken++;
+    i++;
   }
-  color /= samples_taken - 1;
+  color /= i - 1;
   buffer->update_pixel(color, x, y);
 }

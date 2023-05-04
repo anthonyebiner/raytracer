@@ -43,7 +43,10 @@ public:
     return world_ray;
   }
 
-  RAYTRACER_DEVICE_FUNC Ray generate_ray_for_thin_lens(float x, float y, float rndR, float rndTheta) const {
+  RAYTRACER_DEVICE_FUNC Ray generate_ray_for_thin_lens(float x, float y, uint *seed) const {
+    auto rand = Sampler2D::sample_grid(seed);
+    float rndR = rand[0];
+    float rndTheta = rand[1] * 2.0 * PI;
     Vector3f camera_vector = {(0.5f - x) * tanf(hFov * PI / 360) * 2, (0.5f - y) * tanf(vFov * PI / 360) * 2, -1};
 
     Vector3f p_lens = {aperture * sqrtf(rndR) * cosf(rndTheta), aperture * sqrtf(rndR) * sinf(rndTheta), 0};

@@ -133,12 +133,18 @@ struct Generator {
                                         material.transmittance[2]};
               new_bsdf = new BSDF(
                   BSDFFactory::createGlass(material.ior, 0, transmittance, transmittance));
-            } else {
-              Vector3f diffuse = {material.diffuse[0], material.diffuse[1], material.diffuse[2]};
-              Vector3f specular = {material.specular[0], material.specular[1], material.specular[2]};
+            } else if (material.illum == 11) {
+              Vector3f eta = {material.diffuse[0], material.diffuse[1], material.diffuse[2]};
+              Vector3f k = {material.specular[0], material.specular[1], material.specular[2]};
+              float alpha = material.shininess / 100;
 
               new_bsdf = new BSDF(
-                  BSDFFactory::createPhong(material.shininess, diffuse, specular));
+                  BSDFFactory::createMicrofacet(alpha, eta, k));
+            } else {
+              Vector3f diffuse = {material.diffuse[0], material.diffuse[1], material.diffuse[2]};
+
+              new_bsdf = new BSDF(
+                  BSDFFactory::createDiffuse(diffuse));
             }
             bsdfs.insert({m_id, new_bsdf});
           } else {

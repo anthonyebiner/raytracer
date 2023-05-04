@@ -8,34 +8,32 @@ using fmt::print;
 int main() {
   printf("Starting program\n");
 
-  PathTracer pathtracer = PathTracer({1000, 4, 50, 0.005f, 7, 4});
+  PathTracer pathtracer = PathTracer({100, 4, 64, 0.05f, 40, 4});
 
   std::vector<Primitive *> primitives;
-  Generator::room(&primitives, 200, 150, 200,
+  Generator::room(&primitives, 2, 1.5, 2,
                   &white_bsdf, &white_bsdf, &red_bsdf, &blue_bsdf, nullptr, &white_bsdf);
 
-  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({-40, 30, 30}, 30, &white_bsdf)));
-  primitives.push_back(new Primitive(PrimitiveFactory::createSphere({40, 30, -30}, 30, &white_bsdf)));
+//  Generator::from_obj(&primitives, "../objects/hairball.obj", &white_bsdf, {0.12, 0.12, 0.12}, {0, .5, 0});
 
-  BSDF white_light_bsdf = BSDFFactory::createEmission({10, 10, 10});
+  BSDF white_light_bsdf = BSDFFactory::createEmission({8, 8, 8});
   primitives.push_back(new Primitive(
-      PrimitiveFactory::createTriangle(Vector3f(-40, 149, -30), Vector3f(40, 149, -30), Vector3f(40, 149, 30),
+      PrimitiveFactory::createTriangle(Vector3f(-.3, 1.49, -.3), Vector3f(.3, 1.49, -.3), Vector3f(.3, 1.49, .3),
                                        Vector3f(0, -1, 0), Vector3f(0, -1, 0), Vector3f(0, -1, 0), &white_light_bsdf)));
   primitives.push_back(new Primitive(
-      PrimitiveFactory::createTriangle(Vector3f(-40, 149, -30), Vector3f(-40, 149, 30), Vector3f(40, 149, 30),
+      PrimitiveFactory::createTriangle(Vector3f(-.3, 1.49, -.3), Vector3f(-.3, 1.49, .3), Vector3f(.3, 1.49, .3),
                                        Vector3f(0, -1, 0), Vector3f(0, -1, 0), Vector3f(0, -1, 0), &white_light_bsdf)));
 
   print("{} primitives\n", primitives.size());
 
   std::vector<SceneLight> lights;
-  lights.push_back(
-      SceneLightFactory::create_area({20, 20, 20}, {0, 149, 0}, {0, -1, 0}, {80, 0, 0}, {0, 0, 60}));
+  lights.push_back(SceneLightFactory::create_area({16, 16, 16}, {0, 1.49, 0}, {0, -1, 0}, {.6, 0, 0}, {0, 0, .6}));
 
   pathtracer.set_scene(primitives, lights);
-  pathtracer.resize(600, 480);
+  pathtracer.resize(1920, 1080);
 
-  pathtracer.set_camera({0, 75, -400}, {0, 75, 0}, {0, 1, 0}, 49, 36.75, 0, INF_F, 0, 0);
+  pathtracer.set_camera({-.75, 1.1, -2.75}, {0, .5, 0}, {0, 1, 0}, 42, 42 * 1024 / 1980, 0, INF_F, 0, 0);
 
   pathtracer.raytrace();
-  pathtracer.save_to_file("test1.bmp");
+  pathtracer.save_to_file("test3.bmp");
 }
